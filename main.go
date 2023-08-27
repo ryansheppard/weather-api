@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/foolin/goview/supports/echoview-v4"
 	"github.com/labstack/echo/v4"
@@ -15,6 +17,15 @@ const baseurl = "https://api.weather.gov"
 
 func getForecast(c echo.Context) error {
 	rawCoords := c.Param("coords")
+	limit := c.QueryParam("limit")
+	maxPeriods := 0 // Ignore if 0
+	var err error
+	if limit != "" {
+		maxPeriods, err = strconv.Atoi(limit)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	coords := utils.ParseCoordinates(rawCoords)
 
 	n := noaa.NewNOAA(baseurl)
@@ -28,9 +39,13 @@ func getForecast(c echo.Context) error {
 		log.Fatal(err)
 	}
 
-	forecasts := make(map[string]string)
-	for _, period := range forecast.Properties.Periods {
-		forecasts[period.Name] = period.DetailedForecast
+	forecasts := []string{}
+	for i, period := range forecast.Properties.Periods {
+		if maxPeriods > 0 && i >= maxPeriods {
+			break
+		}
+		forecastString := fmt.Sprintf("%s: %s", period.Name, period.DetailedForecast)
+		forecasts = append(forecasts, forecastString)
 	}
 
 	resp := echo.Map{
