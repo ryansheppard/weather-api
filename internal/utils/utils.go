@@ -63,6 +63,8 @@ func GetForecast(c echo.Context) error {
 		log.Fatal(err)
 	}
 
+	alerts, err := n.GetAlerts(coords.Latitude, coords.Longitude)
+
 	forecasts := []string{}
 	for _, period := range forecast.Properties.Periods {
 		forecastString := fmt.Sprintf("%s: %s", period.Name, period.DetailedForecast)
@@ -73,9 +75,15 @@ func GetForecast(c echo.Context) error {
 		forecasts = forecasts[:maxPeriods]
 	}
 
+	alertMap := make(map[string]string)
+	for _, alert := range alerts.Features {
+		alertMap[alert.Properties.Headline] = alert.Properties.Description
+	}
+
 	resp := echo.Map{
 		"coords":    rawCoords,
 		"forecasts": forecasts,
+		"alerts":    alertMap,
 	}
 
 	return c.Render(http.StatusOK, "weather.html", resp)

@@ -76,13 +76,17 @@ func (n *NWS) GetForecast(point *PointResponse) (forecast *ForecastResponse, err
 	return
 }
 
-func (n *NWS) GetAlerts(state string) {
-	path := fmt.Sprintf("/alerts/active?area=%s", state)
+func (n *NWS) GetAlerts(lat float64, long float64) (alerts *AlertResponse, err error) {
+	path := fmt.Sprintf("/alerts/active?point=%f,%f", lat, long)
 	body, err := n.get(path)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(body))
+	err = decode(body, &alerts)
+	if err != nil {
+		return nil, err
+	}
+
+	return
 }

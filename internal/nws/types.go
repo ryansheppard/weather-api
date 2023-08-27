@@ -58,3 +58,16 @@ type DetailedUnit struct {
 	UnitCode string  `json:"unitCode"`
 	Value    float64 `json:"value"`
 }
+
+type AlertResponse struct {
+	Features []AlertFeature `json:"features"`
+}
+
+type AlertFeature struct {
+	Properties FeatureProperties `json:"properties"`
+}
+
+type FeatureProperties struct {
+	Headline    string `json:"headline"`
+	Description string `json:"description"`
+}
