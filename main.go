@@ -18,6 +18,7 @@ func main() {
 	e.Renderer = echoview.Default()
 
 	e.GET("/f/:coords", utils.GetForecast)
+	e.GET("f/help", utils.GetHelp)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

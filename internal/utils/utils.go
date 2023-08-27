@@ -18,6 +18,13 @@ type coordinates struct {
 	Longitude float64 `json:"longitude"`
 }
 
+type Params struct {
+	Coords     string `param:"coords"`
+	Limit      int    `query:"limit"`
+	Short      bool   `query:"short"`
+	HideAlerts bool   `query:"hidealerts"`
+}
+
 func parseCoordinates(raw string) *coordinates {
 	rawCoords := strings.Split(raw, ",")
 	lat, err := strconv.ParseFloat(strings.TrimSpace(rawCoords[0]), 64)
@@ -37,20 +44,13 @@ func parseCoordinates(raw string) *coordinates {
 }
 
 func GetForecast(c echo.Context) error {
-	var err error
-
-	rawCoords := c.Param("coords")
-	limit := c.QueryParam("limit")
-
-	maxPeriods := 0 // Ignore if 0
-	if limit != "" {
-		maxPeriods, err = strconv.Atoi(limit)
-		if err != nil {
-			log.Fatal(err)
-		}
+	var p Params
+	err := c.Bind(&p)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	coords := parseCoordinates(rawCoords)
+	coords := parseCoordinates(p.Coords)
 
 	n := nws.NewNWS(baseurl)
 	point, err := n.GetPoints(coords.Latitude, coords.Longitude)
@@ -63,28 +63,43 @@ func GetForecast(c echo.Context) error {
 		log.Fatal(err)
 	}
 
-	alerts, err := n.GetAlerts(coords.Latitude, coords.Longitude)
-
 	forecasts := []string{}
 	for _, period := range forecast.Properties.Periods {
-		forecastString := fmt.Sprintf("%s: %s", period.Name, period.DetailedForecast)
+		var forecastDesc string
+		if p.Short {
+			forecastDesc = period.ShortForecast
+		} else {
+			forecastDesc = period.DetailedForecast
+		}
+		forecastString := fmt.Sprintf("%s: %s", period.Name, forecastDesc)
 		forecasts = append(forecasts, forecastString)
 	}
 
-	if maxPeriods > 0 && len(forecasts) > maxPeriods {
-		forecasts = forecasts[:maxPeriods]
+	if p.Limit > 0 && len(forecasts) > p.Limit {
+		forecasts = forecasts[:p.Limit]
 	}
 
 	alertMap := make(map[string]string)
-	for _, alert := range alerts.Features {
-		alertMap[alert.Properties.Headline] = alert.Properties.Description
+	if !p.HideAlerts {
+		alerts, err := n.GetAlerts(coords.Latitude, coords.Longitude)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, alert := range alerts.Features {
+			alertMap[alert.Properties.Headline] = alert.Properties.Description
+		}
 	}
 
 	resp := echo.Map{
-		"coords":    rawCoords,
+		"coords":    p.Coords,
 		"forecasts": forecasts,
 		"alerts":    alertMap,
 	}
 
 	return c.Render(http.StatusOK, "weather.html", resp)
+}
+
+func GetHelp(c echo.Context) error {
+	return c.Render(http.StatusOK, "help.html", nil)
 }
