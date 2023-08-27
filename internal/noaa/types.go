@@ -82,5 +82,11 @@ type DetailedUnit struct {
 }
 
 type Forecast struct {
-	Periods []string `json:"periods"`
+	DetailedForecasts []string `json:"detailed_forecasts"`
+}
+
+func NewForecast(forecasts []string) *Forecast {
+	return &Forecast{
+		DetailedForecasts: forecasts,
+	}
 }
