@@ -4,7 +4,6 @@ go 1.21.0
 
 require (
 	github.com/foolin/goview v0.3.0
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.11.1
 )
 

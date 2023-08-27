@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-
 	"github.com/ryansheppard/weather/internal/noaa"
 )
 
