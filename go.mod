@@ -1,6 +1,6 @@
 module github.com/ryansheppard/weather
 
-go 1.20
+go 1.21.0
 
 require (
 	github.com/foolin/goview v0.3.0
