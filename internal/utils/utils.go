@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"github.com/ryansheppard/weather/internal/noaa"
+	"github.com/ryansheppard/weather/internal/nws"
 )
 
 const baseurl = "https://api.weather.gov"
@@ -52,7 +52,7 @@ func GetForecast(c echo.Context) error {
 
 	coords := parseCoordinates(rawCoords)
 
-	n := noaa.NewNOAA(baseurl)
+	n := nws.NewNWS(baseurl)
 	point, err := n.GetPoints(coords.Latitude, coords.Longitude)
 	if err != nil {
 		log.Fatal(err)

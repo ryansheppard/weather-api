@@ -1,7 +1,7 @@
-// Package noaa holds the types for the NOAA API
-package noaa
+// Package nws holds the types for the NWS API
+package nws
 
-// PointResponse is the JSON response from the NOAA point api
+// PointResponse is the JSON response from the NWS point api
 type PointResponse struct {
 	Properties PointProperties `json:"properties"`
 }

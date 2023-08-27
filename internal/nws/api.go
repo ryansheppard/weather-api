@@ -1,4 +1,4 @@
-package noaa
+package nws
 
 import (
 	"encoding/json"
@@ -8,16 +8,16 @@ import (
 	"net/http"
 )
 
-type NOAA struct {
+type NWS struct {
 	baseURL string
 }
 
-func NewNOAA(baseURL string) *NOAA {
-	n := NOAA{baseURL: baseURL}
+func NewNWS(baseURL string) *NWS {
+	n := NWS{baseURL: baseURL}
 	return &n
 }
 
-func (n *NOAA) get(path string) ([]byte, error) {
+func (n *NWS) get(path string) ([]byte, error) {
 	url := fmt.Sprintf("%s%s", n.baseURL, path)
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -44,8 +44,8 @@ func decode(body []byte, v interface{}) error {
 	return json.Unmarshal(body, &v)
 }
 
-// Gets points from NOOA weather API
-func (n *NOAA) GetPoints(lat float64, long float64) (point *PointResponse, err error) {
+// Gets points from NWS weather API
+func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err error) {
 	path := fmt.Sprintf("/points/%f,%f", lat, long)
 	body, err := n.get(path)
 
@@ -61,7 +61,7 @@ func (n *NOAA) GetPoints(lat float64, long float64) (point *PointResponse, err e
 	return
 }
 
-func (n *NOAA) GetForecast(point *PointResponse) (forecast *ForecastResponse, err error) {
+func (n *NWS) GetForecast(point *PointResponse) (forecast *ForecastResponse, err error) {
 	path := fmt.Sprintf("/gridpoints/%s/%d,%d/forecast", point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
 	body, err := n.get(path)
 	if err != nil {
@@ -76,7 +76,7 @@ func (n *NOAA) GetForecast(point *PointResponse) (forecast *ForecastResponse, er
 	return
 }
 
-func (n *NOAA) GetAlerts(state string) {
+func (n *NWS) GetAlerts(state string) {
 	path := fmt.Sprintf("/alerts/active?area=%s", state)
 	body, err := n.get(path)
 
