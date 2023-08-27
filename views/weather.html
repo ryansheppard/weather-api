@@ -2,7 +2,7 @@
     <body>
       <h3>Forecast for {{.coords}}</h3>
       {{range $key, $value := .forecasts}}
-      <p>{{$key}} - {{$value}}</p>
+        <p><b>{{$key}}</b>: {{$value}}</p>
       {{end}}
     </body>
 </html>

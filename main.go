@@ -3,43 +3,19 @@ package main
 import (
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/foolin/goview/supports/echoview-v4"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ryansheppard/weather/internal/noaa"
+	"github.com/ryansheppard/weather/internal/utils"
 )
-
-type coordinates struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}
 
 const baseurl = "https://api.weather.gov"
 
-func parseCooridinates(raw string) *coordinates {
-	rawCoords := strings.Split(raw, ",")
-	lat, err := strconv.ParseFloat(strings.TrimSpace(rawCoords[0]), 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-	long, err := strconv.ParseFloat(strings.TrimSpace(rawCoords[1]), 64)
-	if err != nil {
-		log.Fatal(err)
-	}
-	coords := &coordinates{
-		Latitude:  lat,
-		Longitude: long,
-	}
-
-	return coords
-}
-
 func getForecast(c echo.Context) error {
 	rawCoords := c.Param("coords")
-	coords := parseCooridinates(rawCoords)
+	coords := utils.ParseCoordinates(rawCoords)
 
 	n := noaa.NewNOAA(baseurl)
 	point, err := n.GetPoints(coords.Latitude, coords.Longitude)
@@ -64,6 +40,7 @@ func getForecast(c echo.Context) error {
 
 	return c.Render(http.StatusOK, "weather.html", resp)
 }
+
 func main() {
 	e := echo.New()
 
@@ -74,10 +51,7 @@ func main() {
 
 	e.Renderer = echoview.Default()
 
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
-	e.GET("/forecast/:coords", getForecast)
+	e.GET("/f/:coords", getForecast)
 
 	e.Logger.Fatal(e.Start(":1323"))
 }

@@ -1,8 +1,6 @@
 // Package noaa holds the types for the NOAA API
 package noaa
 
-import "fmt"
-
 // PointResponse is the JSON response from the NOAA point api
 type PointResponse struct {
 	Properties PointProperties `json:"properties"`
@@ -36,17 +34,6 @@ type ForecastProperties struct {
 	Periods []ForecastPeriod `json:"periods"`
 }
 
-func (f *ForecastResponse) GetPeriods(n int) []string {
-	// TODO: handle array out of bounds
-	periods := f.Properties.Periods[:n]
-	var periodsAsString []string
-	for _, period := range periods {
-		periodsAsString = append(periodsAsString, period.String())
-	}
-
-	return periodsAsString
-}
-
 // ForecastPeriod is a period in the forecast
 type ForecastPeriod struct {
 	Number                     int          `json:"number"`
@@ -66,27 +53,8 @@ type ForecastPeriod struct {
 	DetailedForecast           string       `json:"detailedForecast"`
 }
 
-func (fp *ForecastPeriod) String() string {
-	var precipProbString string
-	precipProb := fp.ProbabilityOfPrecipitation.Value
-	if precipProb > 0 {
-		precipProbString = fmt.Sprintf(", %.0f%% precip", precipProb)
-	}
-	return fmt.Sprintf("%s %d%s, %s %s%s", fp.Name, fp.Temperature, fp.TemperatureUnit, fp.WindDirection, fp.WindSpeed, precipProbString)
-}
-
 // DetailedUnit is a unit and value
 type DetailedUnit struct {
 	UnitCode string  `json:"unitCode"`
 	Value    float64 `json:"value"`
-}
-
-type Forecast struct {
-	DetailedForecasts []string `json:"detailed_forecasts"`
-}
-
-func NewForecast(forecasts []string) *Forecast {
-	return &Forecast{
-		DetailedForecasts: forecasts,
-	}
 }
