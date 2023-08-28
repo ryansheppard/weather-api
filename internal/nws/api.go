@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	"github.com/patrickmn/go-cache"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type NWS struct {
@@ -14,18 +16,39 @@ type NWS struct {
 	cache   *cache.Cache
 }
 
+var (
+	getsProcessed = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "weather_get_calls_total",
+		Help: "The total number of processed events",
+	})
+
+	cacheHits = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "weather_cache_hits_total",
+		Help: "The total number of cache hits",
+	})
+
+	cacheMisses = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "weather_cache_misses_total",
+		Help: "The total number of cache misses",
+	})
+)
+
 func NewNWS(baseURL string, cache *cache.Cache) *NWS {
 	n := NWS{baseURL: baseURL, cache: cache}
 	return &n
 }
 
 func (n *NWS) get(path string) ([]byte, error) {
+	getsProcessed.Inc()
 	url := fmt.Sprintf("%s%s", n.baseURL, path)
 	rawBody, found := n.cache.Get(url)
 	if found {
+		cacheHits.Inc()
 		fmt.Printf("Cache hit for %s\n", url)
 		return rawBody.([]byte), nil
 	}
+
+	cacheMisses.Inc()
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

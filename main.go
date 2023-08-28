@@ -1,9 +1,13 @@
 package main
 
 import (
+	"errors"
+	"log"
+	"net/http"
 	"time"
 
 	"github.com/foolin/goview/supports/echoview-v4"
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/patrickmn/go-cache"
@@ -27,11 +31,19 @@ func main() {
 	}))
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
 	e.Use(middleware.Recover())
+	e.Use(echoprometheus.NewMiddleware("weather"))
 
 	e.Renderer = echoview.Default()
 
 	e.GET("/f/:coords", utils.GetForecast)
 	e.GET("f/help", utils.GetHelp)
+	go func() {
+		metrics := echo.New()
+		metrics.GET("/metrics", echoprometheus.NewHandler())
+		if err := metrics.Start(":1324"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
+		}
+	}()
 
 	e.Logger.Fatal(e.Start(":1323"))
 }
