@@ -50,8 +50,8 @@ func main() {
 	renderer.SetFileHandler(embeddedFH)
 	e.Renderer = renderer
 
-	e.GET("/f/:coords", utils.GetForecast)
-	e.GET("f/help", utils.GetHelp)
+	e.GET("/f/:coords", utils.RenderForecast)
+	e.GET("f/help", utils.RenderHelp)
 	go func() {
 		metrics := echo.New()
 		metrics.GET("/metrics", echoprometheus.NewHandler())

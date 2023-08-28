@@ -42,7 +42,7 @@ func parseCoordinates(raw string) (*coordinates, error) {
 	return coords, nil
 }
 
-func GetForecast(c echo.Context) error {
+func RenderForecast(c echo.Context) error {
 	var p Params
 	err := c.Bind(&p)
 	if err != nil {
@@ -61,7 +61,7 @@ func GetForecast(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	forecast, err := n.GetForecast(point)
+	forecast, err := n.GetForecast(point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
@@ -107,6 +107,6 @@ func GetForecast(c echo.Context) error {
 	return c.Render(http.StatusOK, "weather.html", resp)
 }
 
-func GetHelp(c echo.Context) error {
+func RenderHelp(c echo.Context) error {
 	return c.Render(http.StatusOK, "help.html", nil)
 }

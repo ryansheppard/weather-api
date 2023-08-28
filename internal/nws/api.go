@@ -11,11 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-type NWS struct {
-	baseURL string
-	cache   *cache.Cache
-}
-
 var (
 	getsProcessed = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "weather_get_calls_total",
@@ -33,8 +28,16 @@ var (
 	})
 )
 
+type NWS struct {
+	baseURL string
+	cache   *cache.Cache
+}
+
 func NewNWS(baseURL string, cache *cache.Cache) *NWS {
-	n := NWS{baseURL: baseURL, cache: cache}
+	n := NWS{
+		baseURL: baseURL,
+		cache:   cache,
+	}
 	return &n
 }
 
@@ -101,8 +104,8 @@ func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err er
 	return
 }
 
-func (n *NWS) GetForecast(point *PointResponse) (forecast *ForecastResponse, err error) {
-	path := fmt.Sprintf("/gridpoints/%s/%d,%d/forecast", point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
+func (n *NWS) GetForecast(gridId string, gridX int, gridY int) (forecast *ForecastResponse, err error) {
+	path := fmt.Sprintf("/gridpoints/%s/%d,%d/forecast", gridId, gridX, gridY)
 	body, err := n.get(path)
 	if err != nil {
 		return
