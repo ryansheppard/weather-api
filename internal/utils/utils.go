@@ -68,7 +68,11 @@ func GetForecast(c echo.Context) error {
 	for _, period := range forecast.Properties.Periods {
 		var forecastDesc string
 		if p.Short {
-			forecastDesc = period.ShortForecast
+			precip := ""
+			if period.ProbabilityOfPrecipitation.Value > 0 {
+				precip = fmt.Sprintf(", %.0f%%", period.ProbabilityOfPrecipitation.Value)
+			}
+			forecastDesc = fmt.Sprintf("%s, %d%s%s", period.ShortForecast, period.Temperature, period.TemperatureUnit, precip)
 		} else {
 			forecastDesc = period.DetailedForecast
 		}
