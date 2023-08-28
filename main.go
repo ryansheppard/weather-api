@@ -1,11 +1,14 @@
 package main
 
 import (
+	"embed"
 	"errors"
 	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
+	"github.com/foolin/goview"
 	"github.com/foolin/goview/supports/echoview-v4"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
@@ -14,8 +17,18 @@ import (
 	"github.com/ryansheppard/weather/internal/utils"
 )
 
+//go:embed views/*
+var views embed.FS
+
+func embeddedFH(config goview.Config, tmpl string) (string, error) {
+	path := filepath.Join(config.Root, tmpl)
+	bytes, err := views.ReadFile(path + config.Extension)
+	return string(bytes), err
+}
+
 func main() {
 	memCache := cache.New(5*time.Minute, 10*time.Minute)
+
 	e := echo.New()
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -33,7 +46,9 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(echoprometheus.NewMiddleware("weather"))
 
-	e.Renderer = echoview.Default()
+	renderer := echoview.Default()
+	renderer.SetFileHandler(embeddedFH)
+	e.Renderer = renderer
 
 	e.GET("/f/:coords", utils.GetForecast)
 	e.GET("f/help", utils.GetHelp)
