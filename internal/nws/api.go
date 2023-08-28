@@ -6,19 +6,27 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/patrickmn/go-cache"
 )
 
 type NWS struct {
 	baseURL string
+	cache   *cache.Cache
 }
 
-func NewNWS(baseURL string) *NWS {
-	n := NWS{baseURL: baseURL}
+func NewNWS(baseURL string, cache *cache.Cache) *NWS {
+	n := NWS{baseURL: baseURL, cache: cache}
 	return &n
 }
 
 func (n *NWS) get(path string) ([]byte, error) {
 	url := fmt.Sprintf("%s%s", n.baseURL, path)
+	rawBody, found := n.cache.Get(url)
+	if found {
+		fmt.Printf("Cache hit for %s\n", url)
+		return rawBody.([]byte), nil
+	}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -36,8 +44,14 @@ func (n *NWS) get(path string) ([]byte, error) {
 	}
 
 	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return ioutil.ReadAll(resp.Body)
+	n.cache.Set(url, body, cache.DefaultExpiration)
+
+	return body, nil
 }
 
 func decode(body []byte, v interface{}) error {

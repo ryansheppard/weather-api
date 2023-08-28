@@ -52,7 +52,8 @@ func GetForecast(c echo.Context) error {
 
 	coords := parseCoordinates(p.Coords)
 
-	n := nws.NewNWS(baseurl)
+	cc := c.(*ContextWithCache)
+	n := nws.NewNWS(baseurl, cc.Cache)
 	point, err := n.GetPoints(coords.Latitude, coords.Longitude)
 	if err != nil {
 		log.Fatal(err)

@@ -5,6 +5,7 @@ go 1.21.0
 require (
 	github.com/foolin/goview v0.3.0
 	github.com/labstack/echo/v4 v4.11.1
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 )
 
 require (
