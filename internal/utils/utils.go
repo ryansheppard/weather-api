@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,22 +24,22 @@ type Params struct {
 	HideAlerts bool   `query:"hidealerts"`
 }
 
-func parseCoordinates(raw string) *coordinates {
+func parseCoordinates(raw string) (*coordinates, error) {
 	rawCoords := strings.Split(raw, ",")
 	lat, err := strconv.ParseFloat(strings.TrimSpace(rawCoords[0]), 64)
 	if err != nil {
-		log.Fatal(err)
+		return &coordinates{}, err
 	}
 	long, err := strconv.ParseFloat(strings.TrimSpace(rawCoords[1]), 64)
 	if err != nil {
-		log.Fatal(err)
+		return &coordinates{}, err
 	}
 	coords := &coordinates{
 		Latitude:  lat,
 		Longitude: long,
 	}
 
-	return coords
+	return coords, nil
 }
 
 func GetForecast(c echo.Context) error {
@@ -50,18 +49,21 @@ func GetForecast(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	coords := parseCoordinates(p.Coords)
+	coords, err := parseCoordinates(p.Coords)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
 
 	cc := c.(*ContextWithCache)
 	n := nws.NewNWS(baseurl, cc.Cache)
 	point, err := n.GetPoints(coords.Latitude, coords.Longitude)
 	if err != nil {
-		log.Fatal(err)
+		return c.String(http.StatusBadRequest, "bad request")
 	}
 
 	forecast, err := n.GetForecast(point)
 	if err != nil {
-		log.Fatal(err)
+		return c.String(http.StatusBadRequest, "bad request")
 	}
 
 	forecasts := []string{}
@@ -88,7 +90,7 @@ func GetForecast(c echo.Context) error {
 	if !p.HideAlerts {
 		alerts, err := n.GetAlerts(coords.Latitude, coords.Longitude)
 		if err != nil {
-			log.Fatal(err)
+			return c.String(http.StatusBadRequest, "bad request")
 		}
 
 		for _, alert := range alerts.Features {

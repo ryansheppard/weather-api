@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/patrickmn/go-cache"
@@ -31,7 +30,7 @@ func (n *NWS) get(path string) ([]byte, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Error creating request:", err)
-		return nil, err
+		return []byte{}, err
 	}
 
 	req.Header.Set("User-Agent", "Weatherbot, ryandsheppard95@gmail.com")
@@ -40,13 +39,17 @@ func (n *NWS) get(path string) ([]byte, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error sending request:", err)
-		return nil, err
+		return []byte{}, err
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return []byte{}, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return []byte{}, fmt.Errorf("bad status code: %d", resp.StatusCode)
 	}
 
 	n.cache.Set(url, body, cache.DefaultExpiration)
@@ -64,12 +67,12 @@ func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err er
 	body, err := n.get(path)
 
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	err = decode(body, &point)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	return
@@ -79,12 +82,12 @@ func (n *NWS) GetForecast(point *PointResponse) (forecast *ForecastResponse, err
 	path := fmt.Sprintf("/gridpoints/%s/%d,%d/forecast", point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
 	body, err := n.get(path)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	err = decode(body, &forecast)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	return
@@ -94,12 +97,12 @@ func (n *NWS) GetAlerts(lat float64, long float64) (alerts *AlertResponse, err e
 	path := fmt.Sprintf("/alerts/active?point=%f,%f", lat, long)
 	body, err := n.get(path)
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
 
 	err = decode(body, &alerts)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	return

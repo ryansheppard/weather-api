@@ -26,6 +26,7 @@ func main() {
 		Level: 5,
 	}))
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(2)))
+	e.Use(middleware.Recover())
 
 	e.Renderer = echoview.Default()
 
