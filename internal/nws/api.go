@@ -29,14 +29,16 @@ var (
 )
 
 type NWS struct {
-	baseURL string
-	cache   *cache.Cache
+	baseURL   string
+	userAgent string
+	cache     *cache.Cache
 }
 
-func NewNWS(baseURL string, cache *cache.Cache) *NWS {
+func NewNWS(baseURL string, userAgent string, cache *cache.Cache) *NWS {
 	n := NWS{
-		baseURL: baseURL,
-		cache:   cache,
+		baseURL:   baseURL,
+		userAgent: userAgent,
+		cache:     cache,
 	}
 	return &n
 }
@@ -59,7 +61,7 @@ func (n *NWS) get(path string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	req.Header.Set("User-Agent", "Weatherbot, ryandsheppard95@gmail.com")
+	req.Header.Set("User-Agent", n.userAgent)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

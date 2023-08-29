@@ -14,12 +14,11 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/patrickmn/go-cache"
+	"github.com/ryansheppard/weather/internal/config"
 	"github.com/ryansheppard/weather/internal/handlers"
 	"github.com/ryansheppard/weather/internal/nws"
 	"github.com/ryansheppard/weather/internal/utils"
 )
-
-const baseurl = "https://api.weather.gov"
 
 //go:embed views/*
 var views embed.FS
@@ -31,8 +30,10 @@ func embeddedFH(config goview.Config, tmpl string) (string, error) {
 }
 
 func main() {
+	config := config.NewConfig()
+
 	memCache := cache.New(5*time.Minute, 10*time.Minute)
-	nws := nws.NewNWS("https://api.weather.gov", memCache)
+	nws := nws.NewNWS(config.BaseURL, config.UserAgent, memCache)
 
 	e := echo.New()
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
