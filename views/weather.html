@@ -6,8 +6,8 @@
     {{end}}
     {{if .alerts}}
     <h3>Alerts</h3>
-    {{range $headline, $desc := .alerts}}
-    <p>{{$headline}}: {{$desc}}</p>
+    {{range $alert := .alerts}}
+    <p>{{$alert}}</p>
     {{end}}
     {{end}}
   </body>

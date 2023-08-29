@@ -2,10 +2,10 @@ package utils
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/patrickmn/go-cache"
+	"github.com/ryansheppard/weather/internal/nws"
 )
 
-type ContextWithCache struct {
+type ContextWithNWS struct {
 	echo.Context
-	Cache *cache.Cache
+	NWS *nws.NWS
 }
