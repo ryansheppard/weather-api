@@ -17,7 +17,6 @@ import (
 	"github.com/ryansheppard/weather/internal/config"
 	"github.com/ryansheppard/weather/internal/handlers"
 	"github.com/ryansheppard/weather/internal/nws"
-	"github.com/ryansheppard/weather/internal/utils"
 )
 
 //go:embed views/*
@@ -38,7 +37,7 @@ func main() {
 	e := echo.New()
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := &utils.ContextWithNWS{c, nws}
+			cc := &handlers.ContextWithNWS{c, nws}
 			return next(cc)
 		}
 	})

@@ -21,7 +21,7 @@ func Forecast(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	cc := c.(*utils.ContextWithNWS)
+	cc := c.(*ContextWithNWS)
 	nws := cc.NWS
 
 	point, err := nws.GetPoints(coords.Latitude, coords.Longitude)

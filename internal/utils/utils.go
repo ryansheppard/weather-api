@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const earthRadiusKm = 6371.0
+
 type Coordinates struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
@@ -39,4 +41,27 @@ func ParseCoordinates(raw string) (coords *Coordinates, err error) {
 	}
 
 	return
+}
+
+func BoundingBox(lat, long, distanceKm float64) (Coordinates, Coordinates) {
+	latRadians := lat * (math.Pi / 180.0)
+	// longRadians := long * (math.Pi / 180.0)
+
+	deltaLat := distanceKm / earthRadiusKm
+	deltaLong := distanceKm / (earthRadiusKm * math.Cos(latRadians))
+
+	deltaLat = deltaLat * (180.0 / math.Pi)
+	deltaLong = deltaLong * (180.0 / math.Pi)
+
+	northWest := Coordinates{
+		Latitude:  lat + deltaLat,
+		Longitude: long - deltaLong,
+	}
+
+	southEast := Coordinates{
+		Latitude:  lat - deltaLat,
+		Longitude: long + deltaLong,
+	}
+
+	return northWest, southEast
 }
