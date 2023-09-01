@@ -36,6 +36,7 @@ var (
 type HttpRequest struct {
 	Endpoint  string
 	UserAgent string
+	Headers   map[string]string
 	Caller    string
 	Cache     *cache.Cache
 }
@@ -60,11 +61,18 @@ func WithCache(cache *cache.Cache) HttpResponseOption {
 	}
 }
 
+func WithHeaders(headers map[string]string) HttpResponseOption {
+	return func(r *HttpRequest) {
+		r.Headers = headers
+	}
+}
+
 func NewHttpRequest(endpoint string, opts ...HttpResponseOption) *HttpRequest {
 	r := &HttpRequest{
 		Endpoint:  endpoint,
 		UserAgent: "",
 		Cache:     nil,
+		Headers:   nil,
 	}
 
 	for _, opt := range opts {
@@ -97,6 +105,12 @@ func (r *HttpRequest) Get() ([]byte, error) {
 
 	if r.UserAgent != "" {
 		req.Header.Set("User-Agent", r.UserAgent)
+	}
+
+	if r.Headers != nil {
+		for key, value := range r.Headers {
+			req.Header.Set(key, value)
+		}
 	}
 
 	client := &http.Client{}

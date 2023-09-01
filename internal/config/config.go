@@ -6,19 +6,24 @@ import (
 )
 
 type Config struct {
-	BaseURL         string
-	UserAgent       string
-	PurpleAirAPIKey string
+	NWSBaseURL       string
+	UserAgent        string
+	PurpleAirBaseURL string
+	PurpleAirAPIKey  string
 }
 
 func NewConfig() *Config {
-	baseUrl, ok := os.LookupEnv("BASEURL")
+	nwsBaseURL, ok := os.LookupEnv("NWS_BASE_URl")
 	if !ok {
-		baseUrl = "https://api.weather.gov"
+		nwsBaseURL = "https://api.weather.gov"
 	}
 	userAgent, ok := os.LookupEnv("USERAGENT")
 	if !ok {
 		log.Fatal("USERAGENT environment variable not set")
+	}
+	purpleAirBaseURL, ok := os.LookupEnv("PURPLE_AIR_BASE_URL")
+	if !ok {
+		purpleAirBaseURL = "https://api.purpleair.com/v1"
 	}
 	purpleAirAPIKey, ok := os.LookupEnv("PURPLE_AIR_API_KEY")
 	if !ok {
@@ -26,8 +31,9 @@ func NewConfig() *Config {
 	}
 
 	return &Config{
-		BaseURL:         baseUrl,
-		UserAgent:       userAgent,
-		PurpleAirAPIKey: purpleAirAPIKey,
+		NWSBaseURL:       nwsBaseURL,
+		UserAgent:        userAgent,
+		PurpleAirBaseURL: purpleAirBaseURL,
+		PurpleAirAPIKey:  purpleAirAPIKey,
 	}
 }

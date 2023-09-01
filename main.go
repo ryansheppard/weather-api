@@ -17,6 +17,7 @@ import (
 	"github.com/ryansheppard/weather/internal/config"
 	"github.com/ryansheppard/weather/internal/handlers"
 	"github.com/ryansheppard/weather/internal/nws"
+	"github.com/ryansheppard/weather/internal/purpleair"
 )
 
 //go:embed views/*
@@ -31,13 +32,16 @@ func embeddedFH(config goview.Config, tmpl string) (string, error) {
 func main() {
 	config := config.NewConfig()
 
-	memCache := cache.New(5*time.Minute, 10*time.Minute)
-	nws := nws.NewNWS(config.BaseURL, config.UserAgent, memCache)
+	nwsCache := cache.New(5*time.Minute, 10*time.Minute)
+	nws := nws.NewNWS(config.NWSBaseURL, config.UserAgent, nwsCache)
+
+	purpleairCache := cache.New(5*time.Minute, 60*time.Minute)
+	purpleair := purpleair.NewPurpleAir(config.PurpleAirBaseURL, config.PurpleAirAPIKey, purpleairCache)
 
 	e := echo.New()
 	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			cc := &handlers.ContextWithNWS{c, nws}
+			cc := &handlers.ContextWithAPIs{c, nws, purpleair}
 			return next(cc)
 		}
 	})
@@ -56,6 +60,7 @@ func main() {
 	e.Renderer = renderer
 
 	e.GET("/f/:coords", handlers.Forecast)
+	e.GET("f/aqi", handlers.AQI)
 	e.GET("f/help", handlers.Help)
 
 	// Serve prometheus metrics on a different port
