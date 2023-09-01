@@ -1,31 +1,10 @@
 package nws
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-)
-
-var (
-	getsProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "weather_get_calls_total",
-		Help: "The total number of processed events",
-	})
-
-	cacheHits = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "weather_cache_hits_total",
-		Help: "The total number of cache hits",
-	})
-
-	cacheMisses = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "weather_cache_misses_total",
-		Help: "The total number of cache misses",
-	})
+	"github.com/ryansheppard/weather/internal/utils"
 )
 
 type NWS struct {
@@ -43,62 +22,22 @@ func NewNWS(baseURL string, userAgent string, cache *cache.Cache) *NWS {
 	return &n
 }
 
-func (n *NWS) get(path string) ([]byte, error) {
-	getsProcessed.Inc()
-	url := fmt.Sprintf("%s%s", n.baseURL, path)
-	rawBody, found := n.cache.Get(url)
-	if found {
-		cacheHits.Inc()
-		fmt.Printf("Cache hit for %s\n", url)
-		return rawBody.([]byte), nil
-	}
-
-	cacheMisses.Inc()
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return []byte{}, err
-	}
-
-	req.Header.Set("User-Agent", n.userAgent)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return []byte{}, err
-	}
-
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return []byte{}, fmt.Errorf("bad status code: %d", resp.StatusCode)
-	}
-
-	n.cache.Set(url, body, cache.DefaultExpiration)
-
-	return body, nil
-}
-
-func decode(body []byte, v interface{}) error {
-	return json.Unmarshal(body, &v)
-}
-
 // Gets points from NWS weather API
 func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err error) {
-	path := fmt.Sprintf("/points/%f,%f", lat, long)
-	body, err := n.get(path)
+	endpoint := fmt.Sprintf("%s/points/%f,%f", n.baseURL, lat, long)
+	r := utils.NewHttpRequest(
+		endpoint,
+		utils.WithUserAgent(n.userAgent),
+		utils.WithCache(n.cache),
+		utils.WithCaller("NWS"),
+	)
+	body, err := r.Get()
 
 	if err != nil {
 		return
 	}
 
-	err = decode(body, &point)
+	err = utils.Decode(body, &point)
 	if err != nil {
 		return
 	}
@@ -107,13 +46,19 @@ func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err er
 }
 
 func (n *NWS) GetForecast(gridId string, gridX int, gridY int) (forecast *ForecastResponse, err error) {
-	path := fmt.Sprintf("/gridpoints/%s/%d,%d/forecast", gridId, gridX, gridY)
-	body, err := n.get(path)
+	endpoint := fmt.Sprintf("%s/gridpoints/%s/%d,%d/forecast", n.baseURL, gridId, gridX, gridY)
+	r := utils.NewHttpRequest(
+		endpoint,
+		utils.WithUserAgent(n.userAgent),
+		utils.WithCache(n.cache),
+		utils.WithCaller("NWS"),
+	)
+	body, err := r.Get()
 	if err != nil {
 		return
 	}
 
-	err = decode(body, &forecast)
+	err = utils.Decode(body, &forecast)
 	if err != nil {
 		return
 	}
@@ -122,13 +67,19 @@ func (n *NWS) GetForecast(gridId string, gridX int, gridY int) (forecast *Foreca
 }
 
 func (n *NWS) GetAlerts(lat float64, long float64) (alerts *AlertResponse, err error) {
-	path := fmt.Sprintf("/alerts/active?point=%f,%f", lat, long)
-	body, err := n.get(path)
+	endpoint := fmt.Sprintf("%s/alerts/active?point=%f,%f", n.baseURL, lat, long)
+	r := utils.NewHttpRequest(
+		endpoint,
+		utils.WithUserAgent(n.userAgent),
+		utils.WithCache(n.cache),
+		utils.WithCaller("NWS"),
+	)
+	body, err := r.Get()
 	if err != nil {
 		return
 	}
 
-	err = decode(body, &alerts)
+	err = utils.Decode(body, &alerts)
 	if err != nil {
 		return
 	}

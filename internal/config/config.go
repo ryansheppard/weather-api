@@ -6,8 +6,9 @@ import (
 )
 
 type Config struct {
-	BaseURL   string
-	UserAgent string
+	BaseURL         string
+	UserAgent       string
+	PurpleAirAPIKey string
 }
 
 func NewConfig() *Config {
@@ -19,9 +20,14 @@ func NewConfig() *Config {
 	if !ok {
 		log.Fatal("USERAGENT environment variable not set")
 	}
+	purpleAirAPIKey, ok := os.LookupEnv("PURPLE_AIR_API_KEY")
+	if !ok {
+		log.Fatal("PURPLEAIRAPIKEY environment variable not set")
+	}
 
 	return &Config{
-		BaseURL:   baseUrl,
-		UserAgent: userAgent,
+		BaseURL:         baseUrl,
+		UserAgent:       userAgent,
+		PurpleAirAPIKey: purpleAirAPIKey,
 	}
 }
