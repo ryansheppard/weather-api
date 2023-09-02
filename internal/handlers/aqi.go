@@ -44,9 +44,16 @@ func AQIByCoords(c echo.Context) error {
 	cc := c.(*ContextWithAPIs)
 	purpleair := cc.PurpleAir
 
-	sensors, err := purpleair.ListSensors(coords.Latitude, coords.Longitude, 5)
+	sensors, err := purpleair.ListSensors(coords.Latitude, coords.Longitude, 15)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
+	}
+
+	if len(sensors.Data) == 0 {
+		resp := echo.Map{
+			"coords": rawCoords,
+		}
+		return c.Render(http.StatusNotFound, "aqi_err.html", resp)
 	}
 
 	sensorsByDistance := make(map[float64]*pa.Sensor)

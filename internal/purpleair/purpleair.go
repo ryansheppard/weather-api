@@ -54,6 +54,7 @@ func getAndReturn(endpoint string, p *PurpleAir, data interface{}) (body []byte,
 		utils.WithHeaders(headers),
 	)
 	body, err = r.Get()
+	fmt.Println(string(body))
 	if err != nil {
 		return
 	}
