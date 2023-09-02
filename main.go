@@ -60,9 +60,9 @@ func main() {
 	e.Renderer = renderer
 
 	e.GET("/f/:coords", handlers.Forecast)
-	e.GET("f/aqi/s/:sensorId", handlers.AQIByID)
-	e.GET("f/aqi/c/:coords", handlers.AQIByCoords)
-	e.GET("f/help", handlers.Help)
+	e.GET("/aqi/s/:sensorId", handlers.AQIByID)
+	e.GET("/aqi/c/:coords", handlers.AQIByCoords)
+	e.GET("/f/help", handlers.Help)
 
 	// Serve prometheus metrics on a different port
 	go func() {
