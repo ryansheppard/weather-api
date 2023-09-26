@@ -1,0 +1,30 @@
+version: 2.1
+jobs:
+  build_and_test:
+    docker:
+      - image: cimg/go:1.21.1
+    steps:
+      - checkout
+      - run:
+          name: test
+          command: |
+            go test ./... -v -cover
+      - run:
+          name: build
+          command: |
+            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$(git rev-parse --short HEAD)
+            docker build . -t $IMAGE
+      - run:
+          name: push
+          command: |
+            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$(git rev-parse --short HEAD)
+            echo $DOCKER_USER | docker login --username $DOCKER_USER --password-stdin
+            docker push $IMAGE
+      - run:
+          name: update
+          command: |
+            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$(git rev-parse --short HEAD)
+            yq e -i '.spec.template.spec.containers[0].image = "${IMAGE}"' deployments/manifests/deployment.yaml
+            git add deployments/manifest/deployment.yaml
+            git commit -m 'update [skip ci]'
+            git push origin main
