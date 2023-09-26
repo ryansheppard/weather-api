@@ -19,6 +19,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: weather-api
-  path: "./deployments"
+  path: "./deployments/manifests"
   prune: true
   timeout: 1m
