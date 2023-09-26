@@ -19,7 +19,7 @@ jobs:
           name: push
           command: |
             export IMAGE=registry.digitalocean.com/ryansheppard/weather:$(git rev-parse --short HEAD)
-            echo $DOCKER_USER | docker login --username $DOCKER_USER --password-stdin
+            echo $DOCKER_USER | docker login --username $DOCKER_USER --password-stdin registry.digitalocean.com
             docker push $IMAGE
       - run:
           name: update
