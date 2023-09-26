@@ -30,6 +30,8 @@ spec:
               value: "https://api.weather.gov"
             - name: PURPLE_AIR_BASE_URL
               value: "https://api.purpleair.com/v1"
+            - name: REDIS_ADDR
+              value: redis.default.svc.cluster.local:6379
           envFrom:
             - secretRef:
                 name: weather
