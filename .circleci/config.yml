@@ -9,6 +9,7 @@ jobs:
           name: test
           command: |
             go test ./... -v -cover
+      - setup_remote_docker
       - run:
           name: build
           command: |
