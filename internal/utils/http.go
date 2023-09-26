@@ -8,7 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/ryansheppard/weather-api/internal/cache"
+	"github.com/ryansheppard/weather/internal/cache"
 )
 
 var (

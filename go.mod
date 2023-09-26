@@ -7,7 +7,7 @@ require (
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/prometheus/client_golang v1.14.0
-	github.com/ryansheppard/morningjuegos v0.0.0-20230926125337-3f5375ee70c8
+	github.com/redis/go-redis/v9 v9.2.0
 )
 
 require (
@@ -26,7 +26,6 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.40.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
-	github.com/redis/go-redis/v9 v9.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.11.0 // indirect

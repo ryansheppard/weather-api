@@ -13,7 +13,7 @@ type PurpleAir struct {
 	apiKey  string
 }
 
-func New(baseURL string, apiKey string) *PurpleAir {
+func New(baseURL string, apiKey string) {
 	p := PurpleAir{
 		baseURL: baseURL,
 		apiKey:  apiKey,
@@ -49,7 +49,6 @@ func getAndReturn(endpoint string, p *PurpleAir, data interface{}) (body []byte,
 
 	r := utils.NewHttpRequest(
 		endpoint,
-		utils.WithCacheEnabled(),
 		utils.WithCaller("PurpleAir"),
 		utils.WithHeaders(headers),
 	)

@@ -13,7 +13,7 @@ type NWS struct {
 	userAgent string
 }
 
-func New(baseURL string, userAgent string) *NWS {
+func New(baseURL string, userAgent string) {
 	n := NWS{
 		baseURL:   baseURL,
 		userAgent: userAgent,
@@ -56,7 +56,6 @@ func getAndReturn(endpoint string, n *NWS, data interface{}) (body []byte, err e
 	r := utils.NewHttpRequest(
 		endpoint,
 		utils.WithUserAgent(n.userAgent),
-		utils.WithCacheEnabled(),
 		utils.WithCaller("NWS"),
 	)
 	body, err = r.Get()
