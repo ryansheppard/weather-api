@@ -28,3 +28,8 @@ jobs:
             git add deployments/manifest/deployment.yaml
             git commit -m 'update [skip ci]'
             git push origin main
+
+workflows:
+  build_and_test:
+    jobs:
+      - build_and_test
