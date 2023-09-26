@@ -34,5 +34,5 @@ workflows:
   build_and_test:
     jobs:
       - build_and_test:
-          contexts:
+          context:
             - DIGITAL_OCEAN
