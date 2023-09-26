@@ -14,8 +14,7 @@ import (
 func AQIByID(c echo.Context) error {
 	sensorId := c.Param("sensorId")
 
-	cc := c.(*ContextWithAPIs)
-	purpleair := cc.PurpleAir
+	purpleair := pa.PA
 
 	sensor, err := purpleair.GetSensor(sensorId)
 
@@ -41,8 +40,7 @@ func AQIByCoords(c echo.Context) error {
 	rawCoords := c.Param("coords")
 	coords, err := utils.ParseCoordinates(rawCoords)
 
-	cc := c.(*ContextWithAPIs)
-	purpleair := cc.PurpleAir
+	purpleair := pa.PA
 
 	sensors, err := purpleair.ListSensors(coords.Latitude, coords.Longitude, 15)
 	if err != nil {

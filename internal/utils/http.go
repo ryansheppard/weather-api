@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/ryansheppard/weather-api/internal/cache"
 )
 
 var (
@@ -26,11 +26,6 @@ var (
 		Name: "weather_cache_misses_total",
 		Help: "The total number of cache misses",
 	}, []string{"caller"})
-
-	cacheSkipped = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "weather_cache_skipped_total",
-		Help: "The total number of cache skips",
-	}, []string{"caller"})
 )
 
 type HttpRequest struct {
@@ -38,7 +33,6 @@ type HttpRequest struct {
 	UserAgent string
 	Headers   map[string]string
 	Caller    string
-	Cache     *cache.Cache
 }
 
 type HttpResponseOption func(*HttpRequest)
@@ -55,12 +49,6 @@ func WithCaller(caller string) HttpResponseOption {
 	}
 }
 
-func WithCache(cache *cache.Cache) HttpResponseOption {
-	return func(r *HttpRequest) {
-		r.Cache = cache
-	}
-}
-
 func WithHeaders(headers map[string]string) HttpResponseOption {
 	return func(r *HttpRequest) {
 		r.Headers = headers
@@ -71,7 +59,6 @@ func NewHttpRequest(endpoint string, opts ...HttpResponseOption) *HttpRequest {
 	r := &HttpRequest{
 		Endpoint:  endpoint,
 		UserAgent: "",
-		Cache:     nil,
 		Headers:   nil,
 	}
 
@@ -84,18 +71,14 @@ func NewHttpRequest(endpoint string, opts ...HttpResponseOption) *HttpRequest {
 
 func (r *HttpRequest) Get() ([]byte, error) {
 	getsProcessed.With(prometheus.Labels{"caller": r.Caller}).Inc()
-	if r.Cache != nil {
-		rawBody, found := r.Cache.Get(r.Endpoint)
-		if found {
-			cacheHits.With(prometheus.Labels{"caller": r.Caller}).Inc()
-			fmt.Printf("Cache hit for %s\n", r.Endpoint)
-			return rawBody.([]byte), nil
-		}
-
-		cacheMisses.With(prometheus.Labels{"caller": r.Caller}).Inc()
-	} else {
-		cacheSkipped.With(prometheus.Labels{"caller": r.Caller}).Inc()
+	rawBody, err := cache.GetKey(r.Endpoint)
+	if rawBody != nil {
+		cacheHits.With(prometheus.Labels{"caller": r.Caller}).Inc()
+		fmt.Printf("Cache hit for %s\n", r.Endpoint)
+		return rawBody.([]byte), nil
 	}
+
+	cacheMisses.With(prometheus.Labels{"caller": r.Caller}).Inc()
 
 	req, err := http.NewRequest("GET", r.Endpoint, nil)
 	if err != nil {
@@ -130,9 +113,7 @@ func (r *HttpRequest) Get() ([]byte, error) {
 		return []byte{}, fmt.Errorf("bad status code: %d", resp.StatusCode)
 	}
 
-	if r.Cache != nil {
-		r.Cache.Set(r.Endpoint, body, cache.DefaultExpiration)
-	}
+	cache.SetKey(r.Endpoint, body, 3600)
 
 	return body, nil
 }

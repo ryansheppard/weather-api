@@ -3,23 +3,23 @@ package purpleair
 import (
 	"fmt"
 
-	"github.com/patrickmn/go-cache"
 	"github.com/ryansheppard/weather/internal/utils"
 )
+
+var PA *PurpleAir
 
 type PurpleAir struct {
 	baseURL string
 	apiKey  string
-	cache   *cache.Cache
 }
 
-func NewPurpleAir(baseURL string, apiKey string, cache *cache.Cache) *PurpleAir {
+func New(baseURL string, apiKey string) *PurpleAir {
 	p := PurpleAir{
 		baseURL: baseURL,
 		apiKey:  apiKey,
-		cache:   cache,
 	}
-	return &p
+
+	PA = &p
 }
 
 func (p *PurpleAir) GetSensor(sensorId string) (sensor *SensorResponse, err error) {
@@ -49,7 +49,7 @@ func getAndReturn(endpoint string, p *PurpleAir, data interface{}) (body []byte,
 
 	r := utils.NewHttpRequest(
 		endpoint,
-		utils.WithCache(p.cache),
+		utils.WithCacheEnabled(),
 		utils.WithCaller("PurpleAir"),
 		utils.WithHeaders(headers),
 	)

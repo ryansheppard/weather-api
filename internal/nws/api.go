@@ -3,23 +3,22 @@ package nws
 import (
 	"fmt"
 
-	"github.com/patrickmn/go-cache"
 	"github.com/ryansheppard/weather/internal/utils"
 )
+
+var N *NWS
 
 type NWS struct {
 	baseURL   string
 	userAgent string
-	cache     *cache.Cache
 }
 
-func NewNWS(baseURL string, userAgent string, cache *cache.Cache) *NWS {
+func New(baseURL string, userAgent string) *NWS {
 	n := NWS{
 		baseURL:   baseURL,
 		userAgent: userAgent,
-		cache:     cache,
 	}
-	return &n
+	N = &n
 }
 
 // Gets points from NWS weather API
@@ -57,7 +56,7 @@ func getAndReturn(endpoint string, n *NWS, data interface{}) (body []byte, err e
 	r := utils.NewHttpRequest(
 		endpoint,
 		utils.WithUserAgent(n.userAgent),
-		utils.WithCache(n.cache),
+		utils.WithCacheEnabled(),
 		utils.WithCaller("NWS"),
 	)
 	body, err = r.Get()

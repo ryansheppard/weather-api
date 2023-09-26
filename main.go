@@ -5,15 +5,15 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/foolin/goview"
 	"github.com/foolin/goview/supports/echoview-v4"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/patrickmn/go-cache"
+	"github.com/ryansheppard/weather/internal/cache"
 	"github.com/ryansheppard/weather/internal/config"
 	"github.com/ryansheppard/weather/internal/handlers"
 	"github.com/ryansheppard/weather/internal/nws"
@@ -32,19 +32,13 @@ func embeddedFH(config goview.Config, tmpl string) (string, error) {
 func main() {
 	config := config.NewConfig()
 
-	nwsCache := cache.New(5*time.Minute, 10*time.Minute)
-	nws := nws.NewNWS(config.NWSBaseURL, config.UserAgent, nwsCache)
+	redisAddr := os.Getenv("REDIS_ADDR")
+	cache.New(redisAddr)
 
-	purpleairCache := cache.New(5*time.Minute, 60*time.Minute)
-	purpleair := purpleair.NewPurpleAir(config.PurpleAirBaseURL, config.PurpleAirAPIKey, purpleairCache)
+	nws.New(config.NWSBaseURL, config.UserAgent)
+	purpleair.New(config.PurpleAirBaseURL, config.PurpleAirAPIKey)
 
 	e := echo.New()
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			cc := &handlers.ContextWithAPIs{c, nws, purpleair}
-			return next(cc)
-		}
-	})
 
 	e.IPExtractor = echo.ExtractIPFromRealIPHeader()
 	e.Use(middleware.Logger())
