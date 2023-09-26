@@ -1,0 +1,67 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather
+  labels:
+    app: weather
+spec:
+  selector:
+    matchLabels:
+      app: weather
+  template:
+    metadata:
+      labels:
+        app: weather
+    spec:
+      containers:
+        - name: weather
+          image: registry.digitalocean.com/ryansheppard/weather
+          imagePullPolicy: Always
+          command:
+            - "/weather"
+          ports:
+            - containerPort: 1323
+              name: http
+            - containerPort: 1324
+              name: prometheus
+          env:
+            - name: NWS_BASE_URL
+              value: "https://api.weather.gov"
+            - name: PURPLE_AIR_BASE_URL
+              value: "https://api.purpleair.com/v1"
+          envFrom:
+            - secretRef:
+                name: weather
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather
+spec:
+  ports:
+  - name: weather
+    port: 1323
+    protocol: TCP
+    targetPort: 1323
+  selector:
+    app: weather
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weather
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: w.ryansheppard.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name:  weather
+                port:
+                  number: 1323
