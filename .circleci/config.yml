@@ -26,7 +26,7 @@ jobs:
           name: update
           command: |
             export IMAGE=registry.digitalocean.com/ryansheppard/weather:$(git rev-parse --short HEAD)
-            yq e -i '.spec.template.spec.containers[0].image = "${IMAGE}"' deployments/manifests/deployment.yaml
+            yq e -i '.spec.template.spec.containers[0].image = env(IMAGE)' deployments/manifests/deployment.yaml
             git add deployments/manifest/deployment.yaml
             git commit -m 'update [skip ci]'
             git push origin main
