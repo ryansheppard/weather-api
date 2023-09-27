@@ -24,3 +24,48 @@ spec:
   path: "./deployments/manifests"
   prune: true
   timeout: 1m
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: weather-api
+spec:
+  image: registry.digitalocean.com/ryansheppard/weather
+  interval: 5m
+  secretRef:
+    name: ryansheppard
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: weather-api
+spec:
+  imageRepositoryRef:
+    name: weather-api
+  policy:
+    numerical:
+      order: desc
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageUpdateAutomation
+metadata:
+  name: weather-api
+spec:
+  interval: 10m
+  sourceRef:
+    kind: GitRepository
+    name: weather-api
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        email: fluxcdbot@users.noreply.github.com
+        name: fluxcdbot
+      messageTemplate: '{{range .Updated.Images}}{{println .}}{{end}} [skip ci]'
+    push:
+      branch: main
+  update:
+    path: ./deployments/manifests
+    strategy: Setters
