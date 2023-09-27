@@ -21,12 +21,14 @@ func Forecast(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	point, err := nws.N.GetPoints(coords.Latitude, coords.Longitude)
+	n := nws.GetNWS()
+
+	point, err := n.GetPoints(coords.Latitude, coords.Longitude)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	forecast, err := nws.N.GetForecast(point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
+	forecast, err := n.GetForecast(point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
@@ -34,7 +36,7 @@ func Forecast(c echo.Context) error {
 
 	alertStrings := []string{}
 	if !p.HideAlerts {
-		alerts, err := nws.N.GetAlerts(coords.Latitude, coords.Longitude)
+		alerts, err := n.GetAlerts(coords.Latitude, coords.Longitude)
 		if err != nil {
 			return c.String(http.StatusBadRequest, "bad request")
 		}

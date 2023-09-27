@@ -75,7 +75,7 @@ func (r *HttpRequest) Get() ([]byte, error) {
 	if rawBody != nil {
 		cacheHits.With(prometheus.Labels{"caller": r.Caller}).Inc()
 		fmt.Printf("Cache hit for %s\n", r.Endpoint)
-		return rawBody.([]byte), nil
+		return []byte(rawBody.(string)), nil
 	}
 
 	cacheMisses.With(prometheus.Labels{"caller": r.Caller}).Inc()

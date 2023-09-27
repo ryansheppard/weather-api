@@ -6,7 +6,7 @@ import (
 	"github.com/ryansheppard/weather/internal/utils"
 )
 
-var N *NWS
+var n *NWS
 
 type NWS struct {
 	baseURL   string
@@ -14,11 +14,15 @@ type NWS struct {
 }
 
 func New(baseURL string, userAgent string) {
-	n := NWS{
+	nws := NWS{
 		baseURL:   baseURL,
 		userAgent: userAgent,
 	}
-	N = &n
+	n = &nws
+}
+
+func GetNWS() *NWS {
+	return n
 }
 
 // Gets points from NWS weather API
@@ -59,6 +63,7 @@ func getAndReturn(endpoint string, n *NWS, data interface{}) (body []byte, err e
 		utils.WithCaller("NWS"),
 	)
 	body, err = r.Get()
+	fmt.Println("after get")
 	if err != nil {
 		return
 	}

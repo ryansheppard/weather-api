@@ -6,7 +6,7 @@ import (
 	"github.com/ryansheppard/weather/internal/utils"
 )
 
-var PA *PurpleAir
+var pa *PurpleAir
 
 type PurpleAir struct {
 	baseURL string
@@ -19,7 +19,11 @@ func New(baseURL string, apiKey string) {
 		apiKey:  apiKey,
 	}
 
-	PA = &p
+	pa = &p
+}
+
+func GetPurpleAir() *PurpleAir {
+	return pa
 }
 
 func (p *PurpleAir) GetSensor(sensorId string) (sensor *SensorResponse, err error) {
