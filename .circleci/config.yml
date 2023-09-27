@@ -14,12 +14,12 @@ jobs:
       - run:
           name: build
           command: |
-            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$(date +%s)
+            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$CIRCLE_BUILD_NUM
             docker build . -t $IMAGE
       - run:
           name: push
           command: |
-            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$(date +%s)
+            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$CIRCLE_BUILD_NUM
             echo $DOCKER_USER | docker login --username $DOCKER_USER --password-stdin registry.digitalocean.com
             docker push $IMAGE
 
