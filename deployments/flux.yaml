@@ -4,7 +4,7 @@ kind: GitRepository
 metadata:
   name: weather-api
 spec:
-  interval: 5m0s
+  interval: 1m
   url: ssh://git@github.com/ryansheppard/weather-api
   ref:
     branch: main
@@ -16,7 +16,7 @@ kind: Kustomization
 metadata:
   name: weather-api
 spec:
-  interval: 5m
+  interval: 1m
   targetNamespace: default
   sourceRef:
     kind: GitRepository
@@ -31,7 +31,7 @@ metadata:
   name: weather-api
 spec:
   image: registry.digitalocean.com/ryansheppard/weather
-  interval: 5m
+  interval: 1m
   secretRef:
     name: ryansheppard
 ---
