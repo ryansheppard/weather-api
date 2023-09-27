@@ -3,32 +3,29 @@ package nws
 import (
 	"fmt"
 
+	"github.com/ryansheppard/weather/internal/cache"
 	"github.com/ryansheppard/weather/internal/utils"
 )
-
-var n *NWS
 
 type NWS struct {
 	baseURL   string
 	userAgent string
+	cache     *cache.Cache
 }
 
-func New(baseURL string, userAgent string) {
+func New(baseURL string, userAgent string, cache *cache.Cache) *NWS {
 	nws := NWS{
 		baseURL:   baseURL,
 		userAgent: userAgent,
+		cache:     cache,
 	}
-	n = &nws
-}
-
-func GetNWS() *NWS {
-	return n
+	return &nws
 }
 
 // Gets points from NWS weather API
 func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err error) {
 	endpoint := fmt.Sprintf("%s/points/%f,%f", n.baseURL, lat, long)
-	getAndReturn(endpoint, n, &point)
+	n.getAndReturn(endpoint, &point)
 	if err != nil {
 		return
 	}
@@ -38,7 +35,7 @@ func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err er
 
 func (n *NWS) GetForecast(gridId string, gridX int, gridY int) (forecast *ForecastResponse, err error) {
 	endpoint := fmt.Sprintf("%s/gridpoints/%s/%d,%d/forecast", n.baseURL, gridId, gridX, gridY)
-	getAndReturn(endpoint, n, &forecast)
+	n.getAndReturn(endpoint, &forecast)
 	if err != nil {
 		return
 	}
@@ -48,7 +45,7 @@ func (n *NWS) GetForecast(gridId string, gridX int, gridY int) (forecast *Foreca
 
 func (n *NWS) GetAlerts(lat float64, long float64) (alerts *AlertResponse, err error) {
 	endpoint := fmt.Sprintf("%s/alerts/active?point=%f,%f", n.baseURL, lat, long)
-	getAndReturn(endpoint, n, &alerts)
+	n.getAndReturn(endpoint, &alerts)
 	if err != nil {
 		return
 	}
@@ -56,11 +53,12 @@ func (n *NWS) GetAlerts(lat float64, long float64) (alerts *AlertResponse, err e
 	return
 }
 
-func getAndReturn(endpoint string, n *NWS, data interface{}) (body []byte, err error) {
+func (n *NWS) getAndReturn(endpoint string, data interface{}) (body []byte, err error) {
 	r := utils.NewHttpRequest(
 		endpoint,
 		utils.WithUserAgent(n.userAgent),
 		utils.WithCaller("NWS"),
+		utils.WithCache(n.cache),
 	)
 	body, err = r.Get()
 	if err != nil {

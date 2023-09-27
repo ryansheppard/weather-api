@@ -7,40 +7,45 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var cache *redis.Client
+// var cache *redis.Client
 
-var ctx = context.Background()
+type Cache struct {
+	Client *redis.Client
+	Ctx    context.Context
+}
 
-func New(address string) {
-	if address == "" {
-		return
-	}
+func New(ctx context.Context, address string, database int) *Cache {
+	// if address == "" {
+	// 	return nil
+	// }
 
-	if cache == nil {
-		cache = redis.NewClient(&redis.Options{
-			Addr:     address,
-			Password: "",
-			DB:       1,
-		})
+	client := redis.NewClient(&redis.Options{
+		Addr:     address,
+		Password: "",
+		DB:       database,
+	})
+
+	return &Cache{
+		Client: client,
 	}
 }
 
-func SetKey(key string, value interface{}, ttl int) error {
-	if cache == nil {
-		return nil
-	}
+func (c *Cache) SetKey(key string, value interface{}, ttl int) error {
+	// if cache == nil {
+	// 	return nil
+	// }
 
 	seconds := time.Duration(ttl) * time.Second
 
-	return cache.Set(ctx, key, value, seconds).Err()
+	return c.Client.Set(c.Ctx, key, value, seconds).Err()
 }
 
-func GetKey(key string) (interface{}, error) {
-	if cache == nil {
-		return nil, nil
-	}
+func (c *Cache) GetKey(key string) (interface{}, error) {
+	// if cache == nil {
+	// 	return nil, nil
+	// }
 
-	result, err := cache.Get(ctx, key).Result()
+	result, err := c.Client.Get(c.Ctx, key).Result()
 	if err == redis.Nil {
 		return nil, nil
 	} else if err != nil {
@@ -50,10 +55,10 @@ func GetKey(key string) (interface{}, error) {
 	return result, nil
 }
 
-func DeleteKey(key string) {
-	if cache == nil {
-		return
-	}
+func (c *Cache) DeleteKey(key string) {
+	// if cache == nil {
+	// 	return
+	// }
 
-	cache.Del(ctx, key)
+	c.Client.Del(c.Ctx, key)
 }

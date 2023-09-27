@@ -3,7 +3,8 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -33,6 +34,7 @@ type HttpRequest struct {
 	UserAgent string
 	Headers   map[string]string
 	Caller    string
+	Cache     *cache.Cache
 }
 
 type HttpResponseOption func(*HttpRequest)
@@ -55,11 +57,18 @@ func WithHeaders(headers map[string]string) HttpResponseOption {
 	}
 }
 
+func WithCache(cache *cache.Cache) HttpResponseOption {
+	return func(r *HttpRequest) {
+		r.Cache = cache
+	}
+}
+
 func NewHttpRequest(endpoint string, opts ...HttpResponseOption) *HttpRequest {
 	r := &HttpRequest{
 		Endpoint:  endpoint,
 		UserAgent: "",
 		Headers:   nil,
+		Cache:     nil,
 	}
 
 	for _, opt := range opts {
@@ -71,18 +80,24 @@ func NewHttpRequest(endpoint string, opts ...HttpResponseOption) *HttpRequest {
 
 func (r *HttpRequest) Get() ([]byte, error) {
 	getsProcessed.With(prometheus.Labels{"caller": r.Caller}).Inc()
-	rawBody, err := cache.GetKey(r.Endpoint)
-	if rawBody != nil {
-		cacheHits.With(prometheus.Labels{"caller": r.Caller}).Inc()
-		fmt.Printf("Cache hit for %s\n", r.Endpoint)
-		return []byte(rawBody.(string)), nil
+	if r.Cache != nil {
+		rawBody, err := r.Cache.GetKey(r.Endpoint)
+		if err != nil {
+			slog.Error("Error getting key from cache:", err)
+			return []byte{}, err
+		}
+
+		if rawBody != nil {
+			cacheHits.With(prometheus.Labels{"caller": r.Caller}).Inc()
+			return []byte(rawBody.(string)), nil
+		}
 	}
 
 	cacheMisses.With(prometheus.Labels{"caller": r.Caller}).Inc()
 
 	req, err := http.NewRequest("GET", r.Endpoint, nil)
 	if err != nil {
-		fmt.Println("Error creating request:", err)
+		slog.Error("Error creating request:", err)
 		return []byte{}, err
 	}
 
@@ -99,12 +114,12 @@ func (r *HttpRequest) Get() ([]byte, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error sending request:", err)
+		slog.Error("Error sending request:", err)
 		return []byte{}, err
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -113,7 +128,9 @@ func (r *HttpRequest) Get() ([]byte, error) {
 		return []byte{}, fmt.Errorf("bad status code: %d", resp.StatusCode)
 	}
 
-	cache.SetKey(r.Endpoint, body, 3600)
+	if r.Cache != nil {
+		r.Cache.SetKey(r.Endpoint, body, 3600)
+	}
 
 	return body, nil
 }

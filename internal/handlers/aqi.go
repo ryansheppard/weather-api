@@ -11,12 +11,20 @@ import (
 	"github.com/ryansheppard/weather/internal/utils"
 )
 
-func AQIByID(c echo.Context) error {
+type PAHandler struct {
+	purpleair *pa.PurpleAir
+}
+
+func NewPAHandler(p *pa.PurpleAir) *PAHandler {
+	return &PAHandler{
+		purpleair: p,
+	}
+}
+
+func (p *PAHandler) AQIByID(c echo.Context) error {
 	sensorId := c.Param("sensorId")
 
-	purpleair := pa.GetPurpleAir()
-
-	sensor, err := purpleair.GetSensor(sensorId)
+	sensor, err := p.purpleair.GetSensor(sensorId)
 
 	pmtwofive := sensor.Sensor.PmTwoFiveAtm
 	coords := fmt.Sprintf("%f, %f", sensor.Sensor.Latitude, sensor.Sensor.Longitude)
@@ -36,13 +44,11 @@ func AQIByID(c echo.Context) error {
 	return c.Render(http.StatusOK, "aqi.html", resp)
 }
 
-func AQIByCoords(c echo.Context) error {
+func (p *PAHandler) AQIByCoords(c echo.Context) error {
 	rawCoords := c.Param("coords")
 	coords, err := utils.ParseCoordinates(rawCoords)
 
-	purpleair := pa.GetPurpleAir()
-
-	sensors, err := purpleair.ListSensors(coords.Latitude, coords.Longitude, 15)
+	sensors, err := p.purpleair.ListSensors(coords.Latitude, coords.Longitude, 15)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}

@@ -10,6 +10,7 @@ type Config struct {
 	UserAgent        string
 	PurpleAirBaseURL string
 	PurpleAirAPIKey  string
+	RedisAddr        string
 }
 
 func NewConfig() *Config {
@@ -29,11 +30,16 @@ func NewConfig() *Config {
 	if !ok {
 		log.Fatal("PURPLEAIRAPIKEY environment variable not set")
 	}
+	redisAddr, ok := os.LookupEnv("REDIS_ADDR")
+	if !ok {
+		redisAddr = ""
+	}
 
 	return &Config{
 		NWSBaseURL:       nwsBaseURL,
 		UserAgent:        userAgent,
 		PurpleAirBaseURL: purpleAirBaseURL,
 		PurpleAirAPIKey:  purpleAirAPIKey,
+		RedisAddr:        redisAddr,
 	}
 }

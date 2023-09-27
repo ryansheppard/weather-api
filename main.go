@@ -1,11 +1,11 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 
 	"github.com/foolin/goview"
@@ -31,12 +31,15 @@ func embeddedFH(config goview.Config, tmpl string) (string, error) {
 
 func main() {
 	config := config.NewConfig()
+	ctx := context.Background()
 
-	redisAddr := os.Getenv("REDIS_ADDR")
-	cache.New(redisAddr)
+	cache := cache.New(ctx, config.RedisAddr, 1)
 
-	nws.New(config.NWSBaseURL, config.UserAgent)
-	purpleair.New(config.PurpleAirBaseURL, config.PurpleAirAPIKey)
+	nws := nws.New(config.NWSBaseURL, config.UserAgent, cache)
+	nwsHandler := handlers.NewNWSHandler(nws)
+
+	pa := purpleair.New(config.PurpleAirBaseURL, config.PurpleAirAPIKey, cache)
+	paHandler := handlers.NewPAHandler(pa)
 
 	e := echo.New()
 
@@ -53,10 +56,10 @@ func main() {
 	renderer.SetFileHandler(embeddedFH)
 	e.Renderer = renderer
 
-	e.GET("/f/:coords", handlers.Forecast)
-	e.GET("/aqi/s/:sensorId", handlers.AQIByID)
-	e.GET("/aqi/c/:coords", handlers.AQIByCoords)
-	e.GET("/f/help", handlers.Help)
+	e.GET("/f/:coords", nwsHandler.Forecast)
+	e.GET("/aqi/s/:sensorId", paHandler.AQIByID)
+	e.GET("/aqi/c/:coords", paHandler.AQIByCoords)
+	e.GET("/help", handlers.Help)
 
 	// Serve prometheus metrics on a different port
 	go func() {

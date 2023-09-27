@@ -9,7 +9,24 @@ import (
 	"github.com/ryansheppard/weather/internal/utils"
 )
 
-func Forecast(c echo.Context) error {
+type NWSHandler struct {
+	NWS *nws.NWS
+}
+
+func NewNWSHandler(nws *nws.NWS) *NWSHandler {
+	return &NWSHandler{
+		NWS: nws,
+	}
+}
+
+type ForecastParams struct {
+	Coords     string `param:"coords"`
+	Limit      int    `query:"limit"`
+	Short      bool   `query:"short"`
+	HideAlerts bool   `query:"hidealerts"`
+}
+
+func (n *NWSHandler) Forecast(c echo.Context) error {
 	var p ForecastParams
 	err := c.Bind(&p)
 	if err != nil {
@@ -21,26 +38,24 @@ func Forecast(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	n := nws.GetNWS()
-
-	point, err := n.GetPoints(coords.Latitude, coords.Longitude)
+	point, err := n.NWS.GetPoints(coords.Latitude, coords.Longitude)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 
-	forecast, err := n.GetForecast(point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
+	forecast, err := n.NWS.GetForecast(point.Properties.GridID, point.Properties.GridX, point.Properties.GridY)
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
-	forecasts := processForecast(forecast, p.Short, p.Limit)
+	forecasts := n.processForecast(forecast, p.Short, p.Limit)
 
 	alertStrings := []string{}
 	if !p.HideAlerts {
-		alerts, err := n.GetAlerts(coords.Latitude, coords.Longitude)
+		alerts, err := n.NWS.GetAlerts(coords.Latitude, coords.Longitude)
 		if err != nil {
 			return c.String(http.StatusBadRequest, "bad request")
 		}
-		alertStrings = processAlerts(alerts, p.Short)
+		alertStrings = n.processAlerts(alerts, p.Short)
 	}
 
 	resp := echo.Map{
@@ -52,7 +67,7 @@ func Forecast(c echo.Context) error {
 	return c.Render(http.StatusOK, "weather.html", resp)
 }
 
-func processForecast(forecast *nws.ForecastResponse, short bool, limit int) (forecasts []string) {
+func (n *NWSHandler) processForecast(forecast *nws.ForecastResponse, short bool, limit int) (forecasts []string) {
 	for _, period := range forecast.Properties.Periods {
 		var forecastDesc string
 		if short {
@@ -76,7 +91,7 @@ func processForecast(forecast *nws.ForecastResponse, short bool, limit int) (for
 	return forecasts
 }
 
-func processAlerts(alerts *nws.AlertResponse, short bool) (alertStrings []string) {
+func (n *NWSHandler) processAlerts(alerts *nws.AlertResponse, short bool) (alertStrings []string) {
 	for _, alert := range alerts.Features {
 		var alertString string
 
