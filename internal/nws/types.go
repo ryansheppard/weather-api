@@ -40,7 +40,7 @@ type ForecastPeriod struct {
 	Name                       string       `json:"name"`
 	StartTime                  string       `json:"startTime"`
 	EndTime                    string       `json:"endTime"`
-	isDaytime                  bool         `json:"isDaytime"`
+	IsDaytime                  bool         `json:"isDaytime"`
 	Temperature                int          `json:"temperature"`
 	TemperatureUnit            string       `json:"temperatureUnit"`
 	TemperatureTrend           string       `json:"temperatureTrend"`
