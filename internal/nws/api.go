@@ -63,7 +63,6 @@ func getAndReturn(endpoint string, n *NWS, data interface{}) (body []byte, err e
 		utils.WithCaller("NWS"),
 	)
 	body, err = r.Get()
-	fmt.Println("after get")
 	if err != nil {
 		return
 	}
