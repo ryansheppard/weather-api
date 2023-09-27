@@ -7,8 +7,6 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// var cache *redis.Client
-
 type Cache struct {
 	Client *redis.Client
 	Ctx    context.Context
