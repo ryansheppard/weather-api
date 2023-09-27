@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: weather
-          image: registry.digitalocean.com/ryansheppard/weather:07d0351
+          image: registry.digitalocean.com/ryansheppard/weather:62cb97d
           imagePullPolicy: Always
           command:
             - "/weather"
