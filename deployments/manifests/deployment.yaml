@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: weather
-          image: registry.digitalocean.com/ryansheppard/weather:a9c9412 # {"$imagepolicy": "default:weather-api"}
+          image: registry.digitalocean.com/ryansheppard/weather:431e417 # {"$imagepolicy": "default:weather-api"}
           command:
             - "/weather"
           ports:
