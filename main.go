@@ -33,12 +33,12 @@ func main() {
 	config := config.NewConfig()
 	ctx := context.Background()
 
-	cache := cache.New(ctx, config.RedisAddr, 1)
+	c := cache.New(ctx, config.RedisAddr, 1)
 
-	nws := nws.New(config.NWSBaseURL, config.UserAgent, cache)
+	nws := nws.New(config.NWSBaseURL, config.UserAgent, c)
 	nwsHandler := handlers.NewNWSHandler(nws)
 
-	pa := purpleair.New(config.PurpleAirBaseURL, config.PurpleAirAPIKey, cache)
+	pa := purpleair.New(config.PurpleAirBaseURL, config.PurpleAirAPIKey, c)
 	paHandler := handlers.NewPAHandler(pa)
 
 	e := echo.New()

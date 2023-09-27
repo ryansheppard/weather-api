@@ -15,9 +15,9 @@ type Cache struct {
 }
 
 func New(ctx context.Context, address string, database int) *Cache {
-	// if address == "" {
-	// 	return nil
-	// }
+	if address == "" {
+		return nil
+	}
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     address,
@@ -27,24 +27,17 @@ func New(ctx context.Context, address string, database int) *Cache {
 
 	return &Cache{
 		Client: client,
+		Ctx:    ctx,
 	}
 }
 
 func (c *Cache) SetKey(key string, value interface{}, ttl int) error {
-	// if cache == nil {
-	// 	return nil
-	// }
-
 	seconds := time.Duration(ttl) * time.Second
 
 	return c.Client.Set(c.Ctx, key, value, seconds).Err()
 }
 
 func (c *Cache) GetKey(key string) (interface{}, error) {
-	// if cache == nil {
-	// 	return nil, nil
-	// }
-
 	result, err := c.Client.Get(c.Ctx, key).Result()
 	if err == redis.Nil {
 		return nil, nil
