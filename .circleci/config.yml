@@ -14,14 +14,16 @@ jobs:
       - run:
           name: build
           command: |
-            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$CIRCLE_BUILD_NUM
-            docker build . -t $IMAGE
+            export IMAGE=registry.digitalocean.com/ryansheppard/weather
+            docker build . -t $IMAGE:$CIRCLE_BUILD_NUM
+            docker tag $IMAGE:$CIRCLE_BUILD_NUM $IMAGE:latest
       - run:
           name: push
           command: |
-            export IMAGE=registry.digitalocean.com/ryansheppard/weather:$CIRCLE_BUILD_NUM
+            export IMAGE=registry.digitalocean.com/ryansheppard/weather
             echo $DOCKER_USER | docker login --username $DOCKER_USER --password-stdin registry.digitalocean.com
-            docker push $IMAGE
+            docker push $IMAGE:$CIRCLE_BUILD_NUM
+            docker push $IMAGE:latest
 
 workflows:
   build_and_test:
