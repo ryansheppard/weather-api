@@ -6,11 +6,12 @@ COPY . .
 RUN apt-get update && apt-get install -y git
 RUN CGO_ENABLED=0 go install -ldflags '-extldflags "-static"' -tags timetzdata
 
-FROM scratch
+FROM gcr.io/distroless/static:nonroot
+
+USER nonroot:nonroot
+
 
 COPY --from=builder /go/bin/weather /weather
-COPY --from=golang:1.21 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
 
 # API
 EXPOSE 1323
