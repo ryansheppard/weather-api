@@ -47,6 +47,11 @@ func (n *NWSHandler) Forecast(c echo.Context) error {
 	if err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
+
+	if forecast == nil {
+		return c.String(http.StatusBadRequest, "no forecast found, try refreshing")
+	}
+
 	forecasts := n.processForecast(forecast, p.Short, p.Limit)
 
 	alertStrings := []string{}
