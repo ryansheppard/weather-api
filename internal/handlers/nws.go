@@ -101,7 +101,7 @@ func (n *NWSHandler) processAlerts(alerts *nws.AlertResponse, short bool) (alert
 		var alertString string
 
 		if short {
-			alertString = fmt.Sprintf("%s", alert.Properties.Headline)
+			alertString = alert.Properties.Headline
 		} else {
 			alertString = fmt.Sprintf("%s: %s", alert.Properties.Headline, alert.Properties.Description)
 		}

@@ -47,6 +47,9 @@ func (p *PAHandler) AQIByID(c echo.Context) error {
 func (p *PAHandler) AQIByCoords(c echo.Context) error {
 	rawCoords := c.Param("coords")
 	coords, err := utils.ParseCoordinates(rawCoords)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "bad request")
+	}
 
 	sensors, err := p.purpleair.ListSensors(coords.Latitude, coords.Longitude, 15)
 	if err != nil {
