@@ -23,50 +23,55 @@ func New(baseURL string, userAgent string, cache *cache.Cache) *NWS {
 }
 
 // Gets points from NWS weather API
-func (n *NWS) GetPoints(lat float64, long float64) (point *PointResponse, err error) {
+func (n *NWS) GetPoints(lat float64, long float64) (*PointResponse, error) {
+	var point *PointResponse
 	endpoint := fmt.Sprintf("%s/points/%f,%f", n.baseURL, lat, long)
-	n.getAndReturn(endpoint, &point)
+	err := n.getAndReturn(endpoint, &point)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return
+	return point, nil
 }
 
-func (n *NWS) GetForecast(gridId string, gridX int, gridY int) (forecast *ForecastResponse, err error) {
+func (n *NWS) GetForecast(gridId string, gridX int, gridY int) (*ForecastResponse, error) {
+	var forecast *ForecastResponse
 	endpoint := fmt.Sprintf("%s/gridpoints/%s/%d,%d/forecast", n.baseURL, gridId, gridX, gridY)
-	n.getAndReturn(endpoint, &forecast)
+	err := n.getAndReturn(endpoint, &forecast)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return
+	return forecast, nil
 }
 
-func (n *NWS) GetAlerts(lat float64, long float64) (alerts *AlertResponse, err error) {
+func (n *NWS) GetAlerts(lat float64, long float64) (*AlertResponse, error) {
+	var alerts *AlertResponse
 	endpoint := fmt.Sprintf("%s/alerts/active?point=%f,%f", n.baseURL, lat, long)
-	n.getAndReturn(endpoint, &alerts)
+	err := n.getAndReturn(endpoint, &alerts)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return
+	return alerts, nil
 }
 
-func (n *NWS) getAndReturn(endpoint string, data interface{}) (body []byte, err error) {
+func (n *NWS) getAndReturn(endpoint string, data interface{}) error {
 	r := utils.NewHttpRequest(
 		endpoint,
 		utils.WithUserAgent(n.userAgent),
 		utils.WithCaller("NWS"),
 		utils.WithCache(n.cache),
 	)
-	body, err = r.Get()
+	body, err := r.Get()
 	if err != nil {
-		return
+		return err
 	}
+
 	err = utils.Decode(body, &data)
 	if err != nil {
-		return
+		return err
 	}
-	return
+
+	return nil
 }

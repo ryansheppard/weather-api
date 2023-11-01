@@ -23,28 +23,29 @@ func New(baseURL string, apiKey string, cache *cache.Cache) *PurpleAir {
 	return &p
 }
 
-func (p *PurpleAir) GetSensor(sensorId string) (sensor *SensorResponse, err error) {
+func (p *PurpleAir) GetSensor(sensorId string) (*SensorResponse, error) {
+	var sensor *SensorResponse
 	endpoint := fmt.Sprintf("%s/sensors/%s?fields=name,latitude,longitude,pm2.5_atm", p.baseURL, sensorId)
-	p.getAndReturn(endpoint, &sensor)
+	err := p.getAndReturn(endpoint, &sensor)
 	if err != nil {
-		return
+		return nil, err
 	}
-	return
+	return sensor, nil
 }
 
-func (p *PurpleAir) ListSensors(lat, long, distanceKm float64) (sensors *ListSensorsResponse, err error) {
+func (p *PurpleAir) ListSensors(lat, long, distanceKm float64) (*ListSensorsResponse, error) {
+	var sensors *ListSensorsResponse
 	northWest, southEast := utils.BoundingBox(lat, long, distanceKm)
 
 	endpoint := fmt.Sprintf("%s/sensors?fields=name,latitude,longitude,pm2.5_atm&nwlng=%f&nwlat=%f&selng=%f&selat=%f&location_type=0", p.baseURL, northWest.Longitude, northWest.Latitude, southEast.Longitude, southEast.Latitude)
-	p.getAndReturn(endpoint, &sensors)
-
+	err := p.getAndReturn(endpoint, &sensors)
 	if err != nil {
-		return
+		return nil, err
 	}
-	return
+	return sensors, err
 }
 
-func (p *PurpleAir) getAndReturn(endpoint string, data interface{}) (body []byte, err error) {
+func (p *PurpleAir) getAndReturn(endpoint string, data interface{}) error {
 	headers := make(map[string]string)
 	headers["X-API-Key"] = p.apiKey
 
@@ -54,13 +55,13 @@ func (p *PurpleAir) getAndReturn(endpoint string, data interface{}) (body []byte
 		utils.WithHeaders(headers),
 		utils.WithCache(p.cache),
 	)
-	body, err = r.Get()
+	body, err := r.Get()
 	if err != nil {
-		return
+		return err
 	}
 	err = utils.Decode(body, &data)
 	if err != nil {
-		return
+		return err
 	}
-	return
+	return nil
 }
