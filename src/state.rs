@@ -1,3 +1,4 @@
+use redis::aio::MultiplexedConnection;
 use reqwest::Client;
 use url::Url;
 
@@ -5,4 +6,5 @@ use url::Url;
 pub struct AppState {
     pub client: Client,
     pub base_url: Url,
+    pub redis: MultiplexedConnection,
 }

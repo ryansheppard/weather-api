@@ -3,11 +3,23 @@ use axum::{
     extract::{Path, State},
     response::Html,
 };
+use redis::{AsyncCommands, SetExpiry, SetOptions};
 
 pub async fn forecast(State(state): State<AppState>, Path(coords): Path<String>) -> Html<String> {
     let (lat, long) = coords.split_once(",").unwrap();
     let lat = lat.trim().parse::<f64>().unwrap();
     let long = long.trim().parse::<f64>().unwrap();
+
+    let lat = (lat * 1000.0).round() / 1000.0;
+    let long = (long * 1000.0).round() / 1000.0;
+
+    let mut con = state.redis.clone();
+
+    let redis_key = format!("{},{}", lat, long);
+
+    if let Ok(Some(cached)) = con.get(&redis_key).await {
+        return Html(cached);
+    }
 
     let points = nws::get_points(&state.client, &state.base_url, lat, long)
         .await
@@ -52,6 +64,12 @@ pub async fn forecast(State(state): State<AppState>, Path(coords): Path<String>)
         resp.push_str("<h3>Alerts</h3>");
         resp.push_str(parsed_alerts.as_ref());
     }
+
+    let options = SetOptions::default().with_expiration(SetExpiry::EX(600));
+    let _: () = con
+        .set_options(&redis_key, &resp, options)
+        .await
+        .unwrap_or_default();
 
     Html(resp)
 }
