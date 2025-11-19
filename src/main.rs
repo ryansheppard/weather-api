@@ -3,6 +3,8 @@ use axum::{Router, routing::get};
 use log::info;
 use reqwest::Client;
 use std::env;
+// use tower_http::compression::CompressionLayer;
+use tower_http::compression::CompressionLayer;
 use url::Url;
 
 mod error;
@@ -42,6 +44,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/f/{coords}", get(handlers::forecast))
+        .layer(CompressionLayer::new())
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
