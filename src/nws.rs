@@ -1,4 +1,4 @@
-use crate::types;
+use crate::types::{AlertResponse, ForecastResponse, PointsResponse};
 use reqwest::{Client, Error};
 use url::Url;
 
@@ -7,17 +7,12 @@ pub async fn get_points(
     base_url: &Url,
     lat: f64,
     long: f64,
-) -> Result<types::PointsResponse, Error> {
+) -> Result<PointsResponse, Error> {
     let endpoint = base_url
         .join(&format!("points/{},{}", lat, long))
         .expect("Failed to construct URL");
 
-    let response = client
-        .get(endpoint.as_str())
-        .send()
-        .await?
-        .json::<types::PointsResponse>()
-        .await?;
+    let response: PointsResponse = get_as_json(client, endpoint).await?;
 
     Ok(response)
 }
@@ -28,7 +23,7 @@ pub async fn get_forecast(
     grid_id: String,
     grid_x: u8,
     grid_y: u8,
-) -> Result<types::ForecastResponse, Error> {
+) -> Result<ForecastResponse, Error> {
     let endpoint = base_url
         .join(&format!(
             "gridpoints/{}/{},{}/forecast",
@@ -36,12 +31,7 @@ pub async fn get_forecast(
         ))
         .expect("Failed to construct URL");
 
-    let response = client
-        .get(endpoint.as_str())
-        .send()
-        .await?
-        .json::<types::ForecastResponse>()
-        .await?;
+    let response: ForecastResponse = get_as_json::<ForecastResponse>(client, endpoint).await?;
 
     Ok(response)
 }
@@ -51,16 +41,25 @@ pub async fn get_alerts(
     base_url: &Url,
     lat: f64,
     long: f64,
-) -> Result<types::AlertResponse, Error> {
+) -> Result<AlertResponse, Error> {
     let endpoint = base_url
         .join(&format!("alerts/active?point={},{}", lat, long))
         .expect("Failed to construct URL");
 
+    let response: AlertResponse = get_as_json(client, endpoint).await?;
+
+    Ok(response)
+}
+
+async fn get_as_json<T: serde::de::DeserializeOwned>(
+    client: &Client,
+    endpoint: Url,
+) -> Result<T, Error> {
     let response = client
         .get(endpoint.as_str())
         .send()
         .await?
-        .json::<types::AlertResponse>()
+        .json::<T>()
         .await?;
 
     Ok(response)
