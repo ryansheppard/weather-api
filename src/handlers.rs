@@ -15,14 +15,15 @@ pub async fn forecast(
     let lat = lat.trim().parse::<f64>()?;
     let long = long.trim().parse::<f64>()?;
 
+    // Round to 3 decimals to cut down on forecast areas
     let lat = (lat * 1000.0).round() / 1000.0;
     let long = (long * 1000.0).round() / 1000.0;
 
-    let mut con = state.redis.clone();
-
     let redis_key = format!("{},{}", lat, long);
 
-    if let Ok(Some(cached)) = con.get(&redis_key).await {
+    if let Some(ref mut con) = state.redis.clone()
+        && let Ok(Some(cached)) = con.get(&redis_key).await
+    {
         return Ok(Html(cached));
     }
 
@@ -67,11 +68,13 @@ pub async fn forecast(
         resp.push_str(parsed_alerts.as_ref());
     }
 
-    let options = SetOptions::default().with_expiration(SetExpiry::EX(600));
-    let _: () = con
-        .set_options(&redis_key, &resp, options)
-        .await
-        .unwrap_or_default();
+    if let Some(ref mut con) = state.redis.clone() {
+        let options = SetOptions::default().with_expiration(SetExpiry::EX(600));
+        let _: () = con
+            .set_options(&redis_key, &resp, options)
+            .await
+            .unwrap_or_default();
+    }
 
     Ok(Html(resp))
 }

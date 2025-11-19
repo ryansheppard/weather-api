@@ -6,5 +6,5 @@ use url::Url;
 pub struct AppState {
     pub client: Client,
     pub base_url: Url,
-    pub redis: MultiplexedConnection,
+    pub redis: Option<MultiplexedConnection>,
 }

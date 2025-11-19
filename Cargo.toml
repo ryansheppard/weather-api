@@ -12,3 +12,5 @@ url = "2.5.7"
 axum = "0.8.7"
 redis = { version = "0.32.7", features = ["aio", "tokio-comp"]}
 anyhow = "1.0.100"
+log = "0.4.28"
+tracing-subscriber = "0.3.20"

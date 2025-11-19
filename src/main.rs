@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use axum::{Router, routing::get};
+use log::info;
 use reqwest::Client;
 use std::env;
 use url::Url;
@@ -12,17 +13,26 @@ mod types;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
     let user_agent = env::var("USER_AGENT").context("USER_AGENT env var must be set")?;
 
     let base_url =
         env::var("NWS_BASE_URL").unwrap_or_else(|_| "https://api.weather.gov".to_string());
 
-    let redis_url = env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1/".to_string());
-    let client = redis::Client::open(redis_url).context("Failed to create redis client")?;
-    let redis_con = client
-        .get_multiplexed_async_connection()
-        .await
-        .context("Failed to create redis connection")?;
+    let redis_con = if let Ok(redis_url) = env::var("REDIS_URL") {
+        let client = redis::Client::open(redis_url).context("Failed to create redis client")?;
+        info!("Using redis");
+        Some(
+            client
+                .get_multiplexed_async_connection()
+                .await
+                .context("Failed to create redis connection")?,
+        )
+    } else {
+        info!("REDIS_URL not set, skipping caching");
+        None
+    };
 
     let state = state::AppState {
         client: Client::builder().user_agent(user_agent).build()?,
