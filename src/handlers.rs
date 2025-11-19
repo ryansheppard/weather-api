@@ -1,14 +1,19 @@
-use crate::{nws, state::AppState};
+use crate::{error::AppError, nws, state::AppState};
 use axum::{
     extract::{Path, State},
     response::Html,
 };
 use redis::{AsyncCommands, SetExpiry, SetOptions};
 
-pub async fn forecast(State(state): State<AppState>, Path(coords): Path<String>) -> Html<String> {
-    let (lat, long) = coords.split_once(",").unwrap();
-    let lat = lat.trim().parse::<f64>().unwrap();
-    let long = long.trim().parse::<f64>().unwrap();
+pub async fn forecast(
+    State(state): State<AppState>,
+    Path(coords): Path<String>,
+) -> Result<Html<String>, AppError> {
+    let (lat, long) = coords
+        .split_once(",")
+        .ok_or_else(|| anyhow::anyhow!("Invalid coords format"))?;
+    let lat = lat.trim().parse::<f64>()?;
+    let long = long.trim().parse::<f64>()?;
 
     let lat = (lat * 1000.0).round() / 1000.0;
     let long = (long * 1000.0).round() / 1000.0;
@@ -18,12 +23,10 @@ pub async fn forecast(State(state): State<AppState>, Path(coords): Path<String>)
     let redis_key = format!("{},{}", lat, long);
 
     if let Ok(Some(cached)) = con.get(&redis_key).await {
-        return Html(cached);
+        return Ok(Html(cached));
     }
 
-    let points = nws::get_points(&state.client, &state.base_url, lat, long)
-        .await
-        .unwrap();
+    let points = nws::get_points(&state.client, &state.base_url, lat, long).await?;
     let points_properties = points.properties;
 
     let (alerts, forecast) = tokio::try_join!(
@@ -35,8 +38,7 @@ pub async fn forecast(State(state): State<AppState>, Path(coords): Path<String>)
             points_properties.grid_x,
             points_properties.grid_y,
         )
-    )
-    .unwrap();
+    )?;
 
     let parts = forecast.properties.periods;
     let forecasts = parts
@@ -71,5 +73,5 @@ pub async fn forecast(State(state): State<AppState>, Path(coords): Path<String>)
         .await
         .unwrap_or_default();
 
-    Html(resp)
+    Ok(Html(resp))
 }
