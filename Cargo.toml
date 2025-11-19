@@ -1,0 +1,14 @@
+[package]
+name = "weathe_rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = {version = "0.12.24", default-features = false, features = ["rustls-tls", "json"]}
+tokio = { version = "1.48.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+url = "2.5.7"
+axum = "0.8.7"
+redis = { version = "0.32.7", features = ["aio", "tokio-comp"]}
+anyhow = "1.0.100"
