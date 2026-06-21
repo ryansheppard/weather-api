@@ -15,6 +15,8 @@ use serde::Deserialize;
 pub struct ForecastParams {
     #[serde(default, deserialize_with = "serde_bool_param")]
     short: bool,
+    #[serde(rename = "hidealerts", default, deserialize_with = "serde_bool_param")]
+    hide_alerts: bool,
     limit: Option<u8>,
 }
 
@@ -37,7 +39,14 @@ pub async fn forecast(
     let points_properties = points.properties;
 
     let (alerts, forecast) = tokio::try_join!(
-        nws::get_alerts(&state.client, &state.redis, &state.base_url, lat, long),
+        nws::get_alerts(
+            &state.client,
+            &state.redis,
+            &state.base_url,
+            lat,
+            long,
+            params.hide_alerts
+        ),
         nws::get_forecast(
             &state.client,
             &state.redis,

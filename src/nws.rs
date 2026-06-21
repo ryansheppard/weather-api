@@ -48,7 +48,11 @@ pub async fn get_alerts(
     base_url: &Url,
     lat: f64,
     long: f64,
+    hide_alerts: bool,
 ) -> Result<AlertResponse, Error> {
+    if hide_alerts {
+        return Ok(AlertResponse { features: vec![] });
+    }
     let endpoint = base_url
         .join(&format!("alerts/active?point={},{}", lat, long))
         .expect("Failed to construct URL");
