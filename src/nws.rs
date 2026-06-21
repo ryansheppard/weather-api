@@ -26,8 +26,8 @@ pub async fn get_forecast(
     redis: &Option<MultiplexedConnection>,
     base_url: &Url,
     grid_id: String,
-    grid_x: u8,
-    grid_y: u8,
+    grid_x: u16,
+    grid_y: u16,
 ) -> Result<ForecastResponse, Error> {
     let endpoint = base_url
         .join(&format!(
@@ -78,6 +78,7 @@ async fn get_as_json<T: serde::de::DeserializeOwned + serde::Serialize>(
         .get(endpoint.as_str())
         .send()
         .await?
+        .error_for_status()?
         .json::<T>()
         .await?;
 

@@ -77,7 +77,7 @@ fn format_forecast(periods: Vec<ForecastPeriod>, short: bool, limit: Option<u8>)
                     p.short_forecast,
                     p.temperature,
                     p.temperature_unit,
-                    p.prob_of_precip.value
+                    p.prob_of_precip.value.unwrap_or(0.0)
                 )
             } else {
                 format!("<p>{}: {}</p>", p.name, p.detailed_forecast)
@@ -141,7 +141,7 @@ mod tests {
             short_forecast: short.to_string(),
             temperature: 72,
             temperature_unit: "F".to_string(),
-            prob_of_precip: DetailedUnit { value: 10.0 },
+            prob_of_precip: DetailedUnit { value: Some(10.0) },
         }
     }
 
@@ -181,6 +181,36 @@ mod tests {
         let result = format_forecast(periods, true, None);
         assert!(result.contains("<p>today: sun, 72F, 10% precip</p>"));
         assert!(result.contains("<p>tonight: cloudy, 72F, 10% precip</p>"));
+    }
+
+    #[test]
+    fn test_format_short_forecast_none_precip() {
+        let periods = vec![ForecastPeriod {
+            name: "today".to_string(),
+            detailed_forecast: "Sunny".to_string(),
+            short_forecast: "sun".to_string(),
+            temperature: 72,
+            temperature_unit: "F".to_string(),
+            prob_of_precip: DetailedUnit { value: None },
+        }];
+
+        let result = format_forecast(periods, true, None);
+        assert!(result.contains("<p>today: sun, 72F, 0% precip</p>"));
+    }
+
+    #[test]
+    fn test_format_short_forecast_zero_precip() {
+        let periods = vec![ForecastPeriod {
+            name: "today".to_string(),
+            detailed_forecast: "Sunny".to_string(),
+            short_forecast: "sun".to_string(),
+            temperature: 72,
+            temperature_unit: "F".to_string(),
+            prob_of_precip: DetailedUnit { value: Some(0.0) },
+        }];
+
+        let result = format_forecast(periods, true, None);
+        assert!(result.contains("<p>today: sun, 72F, 0% precip</p>"));
     }
 
     #[test]

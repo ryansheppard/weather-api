@@ -5,9 +5,9 @@ pub struct PointsProperties {
     #[serde(rename = "gridId")]
     pub grid_id: String,
     #[serde(rename = "gridX")]
-    pub grid_x: u8,
+    pub grid_x: u16,
     #[serde(rename = "gridY")]
-    pub grid_y: u8,
+    pub grid_y: u16,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -31,7 +31,7 @@ pub struct ForecastPeriod {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DetailedUnit {
-    pub value: f64,
+    pub value: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

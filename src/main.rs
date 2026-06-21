@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use axum::{Router, routing::get};
+use core::time;
 use log::info;
 use reqwest::Client;
 use std::env;
@@ -37,7 +38,10 @@ async fn main() -> Result<()> {
     };
 
     let state = state::AppState {
-        client: Client::builder().user_agent(user_agent).build()?,
+        client: Client::builder()
+            .user_agent(user_agent)
+            .timeout(time::Duration::from_secs(10))
+            .build()?,
         base_url: Url::parse(&base_url).context("Failed to parse base URL")?,
         redis: redis_con,
     };
