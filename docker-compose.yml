@@ -1,6 +1,7 @@
 services:
   app:
     build: .
+    restart: unless-stopped
     environment:
       - REDIS_URL=redis://redis:6379/
       - USER_AGENT
@@ -9,6 +10,24 @@ services:
     depends_on:
       - redis
   redis:
-    image: redis:latest
+    image: redis:8.8.0
+    restart: unless-stopped
     ports:
       - "6379:6379"
+  caddy:
+    image: caddy:2.11.4-alpine
+    profiles: [caddy]
+    restart: unless-stopped
+    environment:
+      - DOMAIN
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
