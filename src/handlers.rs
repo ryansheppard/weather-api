@@ -15,6 +15,7 @@ use serde::Deserialize;
 pub struct ForecastParams {
     #[serde(default, deserialize_with = "serde_bool_param")]
     short: bool,
+    limit: Option<u8>,
 }
 
 fn serde_bool_param<'de, D>(deserializer: D) -> Result<bool, D::Error>
@@ -22,11 +23,7 @@ where
     D: serde::Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
-    if s.is_empty() || s == "true" {
-        Ok(true)
-    } else {
-        Ok(false)
-    }
+    if s == "1" { Ok(true) } else { Ok(false) }
 }
 
 pub async fn forecast(
@@ -51,17 +48,18 @@ pub async fn forecast(
         )
     )?;
 
-    let forecasts = format_forecast(forecast.properties.periods, params.short);
+    let forecasts = format_forecast(forecast.properties.periods, params.short, params.limit);
     let alerts = format_alerts(alerts, params.short);
 
-    let resp = build_forecast_html(lat, long, forecasts, alerts);
+    let resp = build_forecast_html(lat, long, forecasts.as_str(), alerts.as_str());
 
     Ok(Html(resp))
 }
 
-fn format_forecast(periods: Vec<ForecastPeriod>, short: bool) -> String {
+fn format_forecast(periods: Vec<ForecastPeriod>, short: bool, limit: Option<u8>) -> String {
     periods
         .into_iter()
+        .take(limit.map_or(usize::MAX, |n| n as usize))
         .map(|p| {
             if short {
                 format!(
@@ -76,8 +74,7 @@ fn format_forecast(periods: Vec<ForecastPeriod>, short: bool) -> String {
                 format!("<p>{}: {}</p>", p.name, p.detailed_forecast)
             }
         })
-        .collect::<Vec<String>>()
-        .join(" ")
+        .collect::<String>()
 }
 
 fn format_alerts(alerts: AlertResponse, short: bool) -> String {
@@ -94,17 +91,16 @@ fn format_alerts(alerts: AlertResponse, short: bool) -> String {
                 )
             }
         })
-        .collect::<Vec<String>>()
-        .join(" ")
+        .collect::<String>()
 }
 
-fn build_forecast_html(lat: f64, long: f64, forecasts: String, alerts: String) -> String {
+fn build_forecast_html(lat: f64, long: f64, forecasts: &str, alerts: &str) -> String {
     let mut resp = String::new();
-    resp.push_str(format!("<h3>Forecast for {}, {}</h3>", lat, long).as_ref());
-    resp.push_str(forecasts.as_ref());
+    resp.push_str(&format!("<h3>Forecast for {}, {}</h3>", lat, long));
+    resp.push_str(forecasts);
     if !alerts.is_empty() {
         resp.push_str("<h3>Alerts</h3>");
-        resp.push_str(alerts.as_ref());
+        resp.push_str(alerts);
     }
 
     resp
@@ -148,10 +144,22 @@ mod tests {
             make_period("tomorrow", "cloudy", "cloudy"),
         ];
 
-        let result = format_forecast(periods, false);
+        let result = format_forecast(periods, false, None);
         assert!(result.contains("<p>today: Sunny</p>"));
         assert!(result.contains("<p>tonight: not sunny</p>"));
         assert!(result.contains("<p>tomorrow: cloudy</p>"));
+    }
+
+    #[test]
+    fn test_format_limit_forecast() {
+        let periods = vec![
+            make_period("today", "Sunny", "sun"),
+            make_period("tonight", "not sunny", "cloudy"),
+            make_period("tomorrow", "cloudy", "cloudy"),
+        ];
+
+        let result = format_forecast(periods, false, Some(1));
+        assert_eq!(result, "<p>today: Sunny</p>");
     }
 
     #[test]
@@ -161,7 +169,7 @@ mod tests {
             make_period("tonight", "not sunny", "cloudy"),
         ];
 
-        let result = format_forecast(periods, true);
+        let result = format_forecast(periods, true, None);
         assert!(result.contains("<p>today: sun, 72F, 10% precip</p>"));
         assert!(result.contains("<p>tonight: cloudy, 72F, 10% precip</p>"));
     }
@@ -246,8 +254,8 @@ mod tests {
 
     #[test]
     fn test_build_forecast_html_with_alerts() {
-        let forecasts = "<p>Today: Sunny</p>".to_string();
-        let alerts = "<p>Heat Advisory: Stay hydrated</p>".to_string();
+        let forecasts = "<p>Today: Sunny</p>";
+        let alerts = "<p>Heat Advisory: Stay hydrated</p>";
 
         let result = build_forecast_html(40.775, -73.970, forecasts, alerts);
 
@@ -259,8 +267,8 @@ mod tests {
 
     #[test]
     fn test_build_forecast_html_without_alerts() {
-        let forecasts = "<p>Today: Sunny</p>".to_string();
-        let alerts = "".to_string();
+        let forecasts = "<p>Today: Sunny</p>";
+        let alerts = "";
 
         let result = build_forecast_html(40.775, -73.970, forecasts, alerts);
 
