@@ -3,7 +3,7 @@ use axum::{Router, routing::get};
 use log::info;
 use reqwest::Client;
 use std::env;
-// use tower_http::compression::CompressionLayer;
+use tokio::signal;
 use tower_http::compression::CompressionLayer;
 use url::Url;
 
@@ -51,8 +51,27 @@ async fn main() -> Result<()> {
         .await
         .context("Failed to create tokio listener")?;
     axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .context("axum failed to serve")?;
 
     Ok(())
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c().await.expect("failed to set up ctrl+c");
+    };
+
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to set up terminate")
+            .recv()
+            .await;
+    };
+
+    tokio::select! {
+        _ = ctrl_c =>{},
+        _ = terminate => {},
+    }
 }

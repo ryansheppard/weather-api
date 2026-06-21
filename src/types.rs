@@ -1,6 +1,6 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PointsProperties {
     #[serde(rename = "gridId")]
     pub grid_id: String,
@@ -10,39 +10,51 @@ pub struct PointsProperties {
     pub grid_y: u8,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PointsResponse {
     pub properties: PointsProperties,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ForecastPeriod {
     #[serde(rename = "detailedForecast")]
     pub detailed_forecast: String,
+    #[serde(rename = "shortForecast")]
+    pub short_forecast: String,
+    #[serde(rename = "probabilityOfPrecipitation")]
+    pub prob_of_precip: DetailedUnit,
+    pub temperature: i16,
+    #[serde(rename = "temperatureUnit")]
+    pub temperature_unit: String,
     pub name: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DetailedUnit {
+    pub value: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ForecastProperties {
     pub periods: Vec<ForecastPeriod>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ForecastResponse {
     pub properties: ForecastProperties,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AlertResponse {
     pub features: Vec<AlertFeature>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AlertFeature {
     pub properties: FeatureProperties,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FeatureProperties {
     pub headline: String,
     pub description: String,
