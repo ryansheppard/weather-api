@@ -2,11 +2,13 @@ use crate::types::{AlertResponse, ForecastResponse, PointsResponse};
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::de::DeserializeOwned;
+use std::time::Duration;
 use url::Url;
 use worker::kv::KvStore;
 
 const FORECAST_TTL: u64 = 600;
 const ALERTS_TTL: u64 = 60;
+const NWS_REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub struct Nws<'a> {
     client: &'a Client,
@@ -65,6 +67,7 @@ impl<'a> Nws<'a> {
         let body = self
             .client
             .get(endpoint.as_str())
+            .timeout(NWS_REQUEST_TIMEOUT)
             .send()
             .await?
             .error_for_status()?
