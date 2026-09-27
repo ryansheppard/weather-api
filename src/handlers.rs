@@ -45,6 +45,7 @@ where
     if s == "1" { Ok(true) } else { Ok(false) }
 }
 
+#[worker::send]
 pub async fn forecast(
     State(state): State<AppState>,
     Path(coords): Path<String>,
@@ -52,27 +53,18 @@ pub async fn forecast(
 ) -> Result<axum::response::Response, AppError> {
     let (lat, long) = parse_coordinates(coords)?;
 
-    let points = nws::get_points(&state.client, &state.redis, &state.base_url, lat, long).await?;
-    let points_properties = points.properties;
+    let nws = nws::Nws::new(&state.client, &state.kv, &state.base_url);
+    let points_properties = nws.get_points(lat, long).await?.properties;
 
-    let (alerts, forecast) = tokio::try_join!(
-        nws::get_alerts(
-            &state.client,
-            &state.redis,
-            &state.base_url,
-            lat,
-            long,
-            params.hide_alerts
-        ),
-        nws::get_forecast(
-            &state.client,
-            &state.redis,
-            &state.base_url,
+    let (alerts, forecast) = futures_util::future::try_join(
+        nws.get_alerts(lat, long, params.hide_alerts),
+        nws.get_forecast(
             points_properties.grid_id,
             points_properties.grid_x,
             points_properties.grid_y,
-        )
-    )?;
+        ),
+    )
+    .await?;
 
     let forecasts = format_forecast(forecast.properties.periods, params.short, params.limit);
     let alerts = format_alerts(alerts, params.short);
