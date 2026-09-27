@@ -1,0 +1,14 @@
+name = "weather"
+main = "build/index.js"
+compatibility_date = "2026-09-27"
+
+[build]
+command = "cargo install -q \"worker-build@^0.8\" && worker-build --release"
+
+[[kv_namespaces]]
+binding = "weather"
+id = "804f6db22bb544e197558888094969cf"
+
+[[previews.kv_namespaces]]
+binding = "weather"
+id = "f07aca798f50448a970dbc137f5b8fbd"

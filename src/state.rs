@@ -1,10 +1,10 @@
-use redis::aio::MultiplexedConnection;
 use reqwest::Client;
 use url::Url;
+use worker::kv;
 
 #[derive(Clone)]
 pub struct AppState {
     pub client: Client,
     pub base_url: Url,
-    pub redis: Option<MultiplexedConnection>,
+    pub kv: kv::KvStore,
 }

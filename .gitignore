@@ -1,2 +1,4 @@
 /target
 mise.local.toml
+.wrangler/
+.dev.vars*
